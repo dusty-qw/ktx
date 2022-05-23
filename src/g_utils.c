@@ -1028,6 +1028,13 @@ void WriteLong(int to, int data)
 	trap_WriteLong(to, data);
 }
 
+void WriteFloat(int to, float data)
+{
+	int send_data;
+	memcpy(&send_data, &data, sizeof(send_data));
+	trap_WriteLong(to, send_data);
+}
+
 void WriteString(int to, char *data)
 {
 	trap_WriteString(to, data);
@@ -1232,7 +1239,7 @@ char* getname(gedict_t *ed)
 // return "his" or "her" depend on gender of player
 char* g_his(gedict_t *ed)
 {
-	static char string[MAX_STRINGS][5];
+	static char string[MAX_STRINGS][8];
 	static int index = 0;
 	char *sex = "his";
 
@@ -1243,6 +1250,10 @@ char* g_his(gedict_t *ed)
 	if (streq(ezinfokey(ed, "gender"), "f"))
 	{
 		sex = "her";
+	}
+	else if (streq(ezinfokey(ed, "gender"), "n"))
+	{
+		sex = "their";
 	}
 
 	string[index][0] = 0;
@@ -1266,6 +1277,10 @@ char* g_he(gedict_t *ed)
 	{
 		sex = "she";
 	}
+	else if (streq(ezinfokey(ed, "gender"), "n"))
+	{
+		sex = "they";
+	}
 
 	string[index][0] = 0;
 	strlcat(string[index], sex, sizeof(string[0]));
@@ -1276,7 +1291,7 @@ char* g_he(gedict_t *ed)
 // return "himself" or "herself" depend on gender of player
 char* g_himself(gedict_t *ed)
 {
-	static char string[MAX_STRINGS][9];
+	static char string[MAX_STRINGS][10];
 	static int index = 0;
 	char *sex = "himself";
 
@@ -1287,6 +1302,10 @@ char* g_himself(gedict_t *ed)
 	if (streq(ezinfokey(ed, "gender"), "f"))
 	{
 		sex = "herself";
+	}
+	else if (streq(ezinfokey(ed, "gender"), "n"))
+	{
+		sex = "themself";
 	}
 
 	string[index][0] = 0;
@@ -1848,6 +1867,17 @@ char* Allowed(float f)
 char* OnOff(float f)
 {
 	return (f ? "on" : "off");
+}
+
+char* AntilagModeString(float f)
+{
+	char *new_antilag_string = "'0 - disabled'";
+	if (f == 1)
+		new_antilag_string = "'1 - KTX'";
+	else if (f == 2)
+		new_antilag_string = "'2 - MVDSV'";
+
+	return new_antilag_string;
 }
 
 // { some scores stuff
