@@ -1587,7 +1587,7 @@ void FixRules()
 	{
 		if (((timelimit == 0) && (fraglimit == 0)) || (timelimit > k_tt) || (timelimit < 0))
 		{
-			if (!isHoonyModeDuel() && !isRACE())
+			if (!isHoonyModeDuel() && !isRACE() && !isCA())
 			{
 				cvar_fset("timelimit", timelimit = k_tt); // sensible default if no max set
 			}
