@@ -4505,7 +4505,7 @@ void PlayerPostThink()
 			}
 			else
 			{
-				self->s.v.armorvalue = 1000;
+				self->s.v.armorvalue = 0;
 				self->s.v.frags = 0;
 			}
 		}
