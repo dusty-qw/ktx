@@ -1548,6 +1548,7 @@ void W_FireGrenade()
 			{
 				self->s.v.items -= IT_GRENADE_LAUNCHER;
 			}
+			
 			AmmoUsed(self);
 		}		
 		else if ((deathmatch != 4) && !k_bloodfest)
