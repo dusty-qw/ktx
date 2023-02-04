@@ -70,6 +70,51 @@ void W_Precache()
 void W_FireSpikes(float ox);
 void W_FireLightning();
 
+
+qbool SendEntity_Projectile(gedict_t *to, int sendflags)
+{
+	WriteByte(MSG_ENTITY, NENT_PROJECTILE);
+	WriteByte(MSG_ENTITY, sendflags);
+
+
+	if (sendflags & 1)
+	{
+		WriteCoord(MSG_ENTITY, self->s.v.origin[0]);
+		WriteCoord(MSG_ENTITY, self->s.v.origin[1]);
+		WriteCoord(MSG_ENTITY, self->s.v.origin[2]);
+
+		WriteCoord(MSG_ENTITY, self->s.v.velocity[0]);
+		WriteCoord(MSG_ENTITY, self->s.v.velocity[1]);
+		WriteCoord(MSG_ENTITY, self->s.v.velocity[2]);
+
+		WriteFloat(MSG_ENTITY, g_globalvars.time);
+	}
+
+
+	if (sendflags & 2)
+	{
+		WriteShort(MSG_ENTITY, self->s.v.modelindex);
+		WriteShort(MSG_ENTITY, self->s.v.effects);
+	}
+
+
+	if (sendflags & 4)
+	{
+		WriteAngle(MSG_ENTITY, self->s.v.angles[0]);
+		WriteAngle(MSG_ENTITY, self->s.v.angles[1]);
+		WriteAngle(MSG_ENTITY, self->s.v.angles[2]);
+	}
+
+	if (sendflags & 8)
+	{
+		WriteEntity(MSG_ENTITY, PROG_TO_EDICT(self->s.v.owner)); // we only care about the owner if it's a player, otherwise world
+		WriteByte(MSG_ENTITY, self->client_time * 255);
+	}
+
+	return true;
+}
+
+
 /*
  ================
  W_FireAxe
@@ -79,6 +124,8 @@ void W_FireAxe()
 {
 	vec3_t source, dest;
 	vec3_t org;
+
+	antilag_lagmove_all_hitscan(self);
 
 	WS_Mark(self, wpAXE);
 
@@ -95,6 +142,7 @@ void W_FireAxe()
 	traceline(PASSVEC3(source), PASSVEC3(dest), false, self);
 	if (g_globalvars.trace_fraction == 1.0)
 	{
+		antilag_unmove_all();
 		return;
 	}
 
@@ -152,6 +200,8 @@ void W_FireAxe()
 		WriteCoord( MSG_MULTICAST, org[2]);
 		trap_multicast(PASSVEC3(org), MULTICAST_PVS);
 	}
+
+	antilag_unmove_all();
 }
 
 //============================================================================
@@ -434,6 +484,7 @@ void FireInstaBullet(vec3_t dir, deathType_t deathtype)
 	int depth, solid;
 	float fraction;
 	gedict_t *ignore;
+	qbool do_antilag = (self->ct == ctPlayer); // hacky check
 
 	if (cvar("k_cg_kb"))
 	{
@@ -470,6 +521,7 @@ void FireInstaBullet(vec3_t dir, deathType_t deathtype)
 	VectorScale(g_globalvars.v_forward, 10, tmp);
 	VectorAdd(self->s.v.origin, tmp, src);
 	src[2] = self->s.v.absmin[2] + self->s.v.size[2] * 0.7;
+
 
 	for (ignore = self, depth = 0; depth < 32; depth++)
 	{
@@ -549,6 +601,7 @@ void FireBullets(float shotcount, vec3_t dir, float spread_x, float spread_y, fl
 	qbool classic_shotgun = cvar("k_classic_shotgun");
 	qbool non_random_bullets = (k_yawnmode
 			|| (!match_in_progress && self && (self->ct == ctPlayer) && iKey(self, "nrb")));
+	qbool do_antilag = (self->ct == ctPlayer); // hacky check
 
 	trap_makevectors(self->s.v.v_angle);
 	VectorScale(g_globalvars.v_forward, 10, tmp);
@@ -556,8 +609,12 @@ void FireBullets(float shotcount, vec3_t dir, float spread_x, float spread_y, fl
 	//src = self->s.v.origin + v_forward*10;
 	src[2] = self->s.v.absmin[2] + self->s.v.size[2] * 0.7;
 
+
 	ClearMultiDamage();
 	multi_damage_type = deathtype;
+
+	if (do_antilag)
+		antilag_lagmove_all_hitscan(self);
 
 	if (cvar("k_instagib"))
 	{
@@ -720,6 +777,9 @@ void FireBullets(float shotcount, vec3_t dir, float spread_x, float spread_y, fl
 		shotcount = shotcount - 1;
 	}
 
+	if (do_antilag)
+		antilag_unmove_all();
+
 	ApplyMultiDamage();
 	if (!classic_shotgun)
 	{
@@ -838,7 +898,9 @@ void W_FireShotgun()
 	aim(dir);
 	if (cvar("k_instagib"))
 	{
+		antilag_lagmove_all_hitscan(self); // we can do the antilag check out here in instagib since knockback doesn't matter
 		FireInstaBullet(dir, dtSG);
+		antilag_unmove_all();
 	}
 	else
 	{
@@ -944,6 +1006,46 @@ void T_InstaKickback()
 	ent_remove(self);
 }
 
+void T_MissileExplode_Antilag()
+{
+	gedict_t *own = PROG_TO_EDICT(self->s.v.owner);
+
+	if ((int)self->s.v.flags & FL_GODMODE)
+	{
+		traceline(PASSVEC3(self->oldangles), PASSVEC3(self->s.v.origin), true, self);
+		trap_setorigin(NUM_FOR_EDICT(self), PASSVEC3(g_globalvars.trace_endpos));
+
+		gedict_t *trace_hit = self->oldenemy;
+		if (trace_hit != NULL)
+		{
+			if (trace_hit->antilag_data != NULL && trace_hit->s.v.solid == SOLID_BSP)
+			{
+				// add platform travel velocity * delay to the rocket position
+				// this is a hack that could misbehave in certain circumstances
+				vec3_t trav_off;
+				VectorScale(trace_hit->s.v.velocity, self->gravity + 0.040, trav_off);
+				VectorAdd(self->s.v.origin, trav_off, trav_off);
+				trap_setorigin(NUM_FOR_EDICT(self), PASSVEC3(trav_off));
+			}
+		}
+	}
+
+	// this is awful, but it's the easiest way to exactly replicate the crappy findradius cropping of the splash radius
+	gedict_t *head;
+	head = trap_findradius(world, self->s.v.origin, 160);
+
+	while (head)
+	{
+		if (head == own)
+		{
+			T_RadiusDamageApply(self, own, head, 120, dtRL);
+		}
+
+		head = trap_findradius(head, self->s.v.origin, 160);
+	}
+	ent_remove(self);
+}
+
 void T_MissileTouch()
 {
 	float damg;
@@ -1003,7 +1105,59 @@ void T_MissileTouch()
 
 	// don't do radius damage to the other, because all the damage
 	// was done in the impact
-	T_RadiusDamage(self, PROG_TO_EDICT(self->s.v.owner), 120, other, dtRL);
+	///*
+	if (cvar("sv_antilag") == 1) // if this is an anti lag rocket, ignore our owner
+	{
+		T_RadiusDamage_Ignore2(self, PROG_TO_EDICT(self->s.v.owner), 120, other, PROG_TO_EDICT(self->s.v.owner), dtRL);
+		gedict_t *local_explosion = spawn();
+
+		vec3_t diff;
+		VectorSubtract(self->s.v.origin, self->oldangles, diff);
+
+		trap_setorigin(NUM_FOR_EDICT(local_explosion), PASSVEC3(self->s.v.origin));
+		VectorCopy(self->oldangles, local_explosion->oldangles);
+		local_explosion->s.v.owner = self->s.v.owner;
+		local_explosion->oldenemy = other;
+
+		float delay;
+
+		if ((int)self->s.v.flags & FL_GODMODE)
+		{
+			delay = (vlen(diff) / vlen(self->s.v.velocity));
+			local_explosion->s.v.flags = (int)self->s.v.flags | FL_GODMODE;
+			delay -= 0.038;
+		}
+		else
+		{
+			vec3_t traveled;
+			VectorScale(self->s.v.velocity, g_globalvars.time - self->rad_time, traveled);
+			VectorAdd(self->oldangles, traveled, self->oldangles);
+			VectorSubtract(self->s.v.origin, self->oldangles, diff);
+
+			delay = (vlen(diff) / vlen(self->s.v.velocity));
+			delay -= 0.038;
+			//delay = self->s.v.health;
+		}
+
+		local_explosion->gravity = g_globalvars.time - time_corrected;
+
+		if (delay > 0.013)
+		{
+			local_explosion->s.v.nextthink = g_globalvars.time + delay;
+			local_explosion->think = (func_t)T_MissileExplode_Antilag;
+		}
+		else
+		{
+			delay = 0;
+			gedict_t *oself = self;
+			self = local_explosion;
+			T_MissileExplode_Antilag();
+			self = oself;
+		}
+	}
+	else
+		T_RadiusDamage(self, PROG_TO_EDICT(self->s.v.owner), 120, other, dtRL);
+	//*/
 
 //  sound (self, CHAN_WEAPON, "weapons/r_exp3.wav", 1, ATTN_NORM);
 	normalize(self->s.v.velocity, tmp);
@@ -1046,12 +1200,18 @@ void W_FireRocket()
 	g_globalvars.msg_entity = EDICT_TO_PROG(self);
 	WriteByte( MSG_ONE, SVC_SMALLKICK);
 
+
 	newmis = spawn();
 	g_globalvars.newmis = EDICT_TO_PROG(newmis);
 	newmis->s.v.owner = EDICT_TO_PROG(self);
 	newmis->s.v.movetype = MOVETYPE_FLYMISSILE;
 	newmis->isMissile = true;
 	newmis->s.v.solid = (isRACE() ? SOLID_TRIGGER : SOLID_BBOX);
+
+	// CSQC projectile optmization
+	trap_SetExtField_i(newmis, "SendEntity", 1);
+	newmis->SendEntity = (func_t)SendEntity_Projectile;
+	trap_SetSendNeeded(NUM_FOR_EDICT(newmis), 255, 0);
 
 	// set newmis speed
 	trap_makevectors(self->s.v.v_angle);
@@ -1086,10 +1246,20 @@ void W_FireRocket()
 
 	// midair 
 	VectorCopy(self->s.v.origin, newmis->s.v.oldorigin);
+	newmis->rad_time = g_globalvars.time;
+
+	antilag_lagmove_all_proj(self, newmis);
+	antilag_unmove_all();
 
 #ifdef BOT_SUPPORT
 	BotsRocketSpawned(newmis);
 #endif
+
+	if (cvar("sv_antilag") == 1)
+	{
+		g_globalvars.newmis = EDICT_TO_PROG(world);
+		newmis = world;
+	}
 }
 
 /*
@@ -1124,7 +1294,14 @@ void LightningHit(gedict_t *from, float damage)
  */
 void LightningDamage(vec3_t p1, vec3_t p2, gedict_t *from, float damage)
 {
+	qbool do_antilag = (from->ct == ctPlayer);  // hacky check
+	if (do_antilag)
+		antilag_lagmove_all_hitscan(from);
+
 	traceline(PASSVEC3(p1), PASSVEC3(p2), false, from);
+
+	if (do_antilag)
+		antilag_unmove_all();
 
 	if (PROG_TO_EDICT(g_globalvars.trace_ent)->s.v.takedamage)
 	{
@@ -1204,7 +1381,9 @@ void W_FireLightning()
 					return;
 				}
 
+				antilag_lagmove_all_hitscan(self);
 				T_RadiusDamage(self, self, 35 * cells, world, dtLG_DIS);
+				antilag_unmove_all();
 
 				return;
 			}
@@ -1221,7 +1400,9 @@ void W_FireLightning()
 				return;
 			}
 
+			antilag_lagmove_all_hitscan(self);
 			T_RadiusDamage(self, self, 35 * cells, world, dtLG_DIS);
+			antilag_unmove_all();
 
 			return;
 		}
@@ -1437,9 +1618,19 @@ void W_FireGrenade()
 	setsize(newmis, 0, 0, 0, 0, 0, 0);
 	setorigin(newmis, PASSVEC3(self->s.v.origin));
 
+	antilag_lagmove_all_proj_bounce(self, newmis);
+	antilag_unmove_all();
+
 #ifdef BOT_SUPPORT
 	BotsGrenadeSpawned(newmis);
 #endif
+	
+	// we don't want to do newmis stuff, antilag 1 takes care of it for us
+	if (cvar("sv_antilag") == 1)
+	{
+		g_globalvars.newmis = EDICT_TO_PROG(world);
+		newmis = world;
+	}
 }
 
 //=============================================================================
@@ -1477,6 +1668,11 @@ void launch_spike(vec3_t org, vec3_t dir)
 	VectorScale(dir, (k_yawnmode ? 1800 : 1000), newmis->s.v.velocity);
 
 	vectoangles(newmis->s.v.velocity, newmis->s.v.angles);
+
+	// CSQC projectile optmization
+	trap_SetExtField_i(newmis, "SendEntity", 1);
+	newmis->SendEntity = (func_t)SendEntity_Projectile;
+	trap_SetSendNeeded(NUM_FOR_EDICT(newmis), 255, 0);
 }
 
 static qbool race_ignore_spike(gedict_t *self, gedict_t *other)
@@ -1644,7 +1840,7 @@ void W_FireSuperSpikes()
 	self->ps.wpn[wpSNG].attacks++;
 
 	sound(self, CHAN_WEAPON, "weapons/spike2.wav", 1, ATTN_NORM);
-	self->attack_finished = g_globalvars.time + 0.2;
+	self->attack_finished = self->client_time + 0.2;
 
 	if (match_in_progress == 2)
 	{
@@ -1665,6 +1861,15 @@ void W_FireSuperSpikes()
 	setsize(newmis, 0, 0, 0, 0, 0, 0);
 	g_globalvars.msg_entity = EDICT_TO_PROG(self);
 	WriteByte( MSG_ONE, SVC_SMALLKICK);
+
+	antilag_lagmove_all_proj(self, newmis);
+	antilag_unmove_all();
+
+	if (cvar("sv_antilag") == 1)
+	{
+		g_globalvars.newmis = EDICT_TO_PROG(world);
+		newmis = world;
+	}
 }
 
 void W_FireSpikes(float ox)
@@ -1703,7 +1908,7 @@ void W_FireSpikes(float ox)
 	self->ps.wpn[wpNG].attacks++;
 
 	sound(self, CHAN_WEAPON, "weapons/rocket1i.wav", 1, ATTN_NORM);
-	self->attack_finished = g_globalvars.time + 0.2;
+	self->attack_finished = self->client_time + 0.2;
 
 	if (match_in_progress == 2)
 	{
@@ -1722,6 +1927,16 @@ void W_FireSpikes(float ox)
 
 	g_globalvars.msg_entity = EDICT_TO_PROG(self);
 	WriteByte( MSG_ONE, SVC_SMALLKICK);
+
+	antilag_lagmove_all_proj(self, newmis);
+	antilag_unmove_all();
+	
+
+	if (cvar("sv_antilag") == 1)
+	{
+		g_globalvars.newmis = EDICT_TO_PROG(world);
+		newmis = world;
+	}
 }
 
 /*
@@ -2103,13 +2318,13 @@ void W_Attack()
 		case IT_AXE:
 			if (self->ctf_flag & CTF_RUNE_HST)
 			{
-				self->attack_finished = g_globalvars.time + 0.5
+				self->attack_finished = self->client_time + 0.5
 						- (cvar("k_ctf_rune_power_hst") / 10);
 				HasteSound(self);
 			}
 			else
 			{
-				self->attack_finished = g_globalvars.time + 0.5;
+				self->attack_finished = self->client_time + 0.5;
 			}
 
 			// crt - no axe sound for spec
@@ -2118,7 +2333,9 @@ void W_Attack()
 				sound(self, CHAN_WEAPON, "weapons/ax1.wav", 1, ATTN_NORM);
 			}
 
-			r = g_random();
+			//r = g_random();
+			//dubious axe RNG to make it predictable
+			r = fabs((((int)(self->client_time * 931.75) << 11) + ((int)(self->client_time) >> 6)) % 1000) / 1000;
 			if (r < 0.25)
 			{
 				player_axe1();
@@ -2142,7 +2359,7 @@ void W_Attack()
 			player_shot1();
 			if (self->ctf_flag & CTF_RUNE_HST)
 			{
-				self->attack_finished = g_globalvars.time + 0.5
+				self->attack_finished = self->client_time + 0.5
 						- (cvar("k_ctf_rune_power_hst") / 10);
 				HasteSound(self);
 			}
@@ -2150,17 +2367,18 @@ void W_Attack()
 			{
 				if (cvar("k_instagib") == 1)
 				{
-					self->attack_finished = g_globalvars.time + 1.2;
+					self->attack_finished = self->client_time + 1.2;
 				}
 				else if (cvar("k_instagib") == 2)
 				{
-					self->attack_finished = g_globalvars.time + 0.7;
+					self->attack_finished = self->client_time + 0.7;
 				}
 				else
 				{
-					self->attack_finished = g_globalvars.time + 0.5;
+					self->attack_finished = self->client_time + 0.5;
 				}
 			}
+
 
 			W_FireShotgun();
 			break;
@@ -2169,13 +2387,13 @@ void W_Attack()
 			player_shot1();
 			if (self->ctf_flag & CTF_RUNE_HST)
 			{
-				self->attack_finished = g_globalvars.time + 0.5
+				self->attack_finished = self->client_time + 0.5
 						- (cvar("k_ctf_rune_power_hst") / 20);
 				HasteSound(self);
 			}
 			else
 			{
-				self->attack_finished = g_globalvars.time + (k_yawnmode ? 0.8 : 0.7);
+				self->attack_finished = self->client_time + (k_yawnmode ? 0.8 : 0.7);
 			}
 
 			W_FireSuperShotgun();
@@ -2195,13 +2413,13 @@ void W_Attack()
 			player_rocket1();
 			if (self->ctf_flag & CTF_RUNE_HST)
 			{
-				self->attack_finished = g_globalvars.time + 0.5
+				self->attack_finished = self->client_time + 0.5
 						- (cvar("k_ctf_rune_power_hst") / 10);
 				HasteSound(self);
 			}
 			else
 			{
-				self->attack_finished = g_globalvars.time + 0.6;
+				self->attack_finished = self->client_time + 0.6;
 			}
 
 			W_FireGrenade();
@@ -2211,20 +2429,20 @@ void W_Attack()
 			player_rocket1();
 			if (self->ctf_flag & CTF_RUNE_HST)
 			{
-				self->attack_finished = g_globalvars.time + 0.5
+				self->attack_finished = self->client_time + 0.5
 						- (cvar("k_ctf_rune_power_hst") / 20);
 				HasteSound(self);
 			}
 			else
 			{
-				self->attack_finished = g_globalvars.time + 0.8;
+				self->attack_finished = self->client_time + 0.8;
 			}
 
 			W_FireRocket();
 			break;
 
 		case IT_LIGHTNING:
-			self->attack_finished = g_globalvars.time + 0.1;
+			self->attack_finished = self->client_time + 0.1;
 			sound(self, CHAN_AUTO, "weapons/lstart.wav", 1, ATTN_NORM);
 			self->s.v.ltime = g_globalvars.time;
 			player_light1();
@@ -2240,7 +2458,7 @@ void W_Attack()
 				player_chain1();
 			}
 
-			self->attack_finished = g_globalvars.time + 0.1;
+			self->attack_finished = self->client_time + 0.1;
 			break;
 	}
 }
@@ -2364,7 +2582,7 @@ qbool W_ChangeWeapon(int wp)
 {
 	int it, am, fl = 0;
 
-	if ((g_globalvars.time < self->attack_finished) && wp != 22)
+	if ((self->client_time < self->attack_finished) && wp != 22)
 	{
 		return false;
 	}
@@ -2500,7 +2718,7 @@ qbool CycleWeaponCommand()
 {
 	int i, it, am;
 
-	if (g_globalvars.time < self->attack_finished)
+	if (self->client_time < self->attack_finished)
 	{
 		return false;
 	}
@@ -2599,7 +2817,7 @@ qbool CycleWeaponReverseCommand()
 {
 	int i, it, am;
 
-	if (g_globalvars.time < self->attack_finished)
+	if (self->client_time < self->attack_finished)
 	{
 		return false;
 	}
@@ -2908,10 +3126,11 @@ void W_WeaponFrame()
 
 	if (!race_weapon_allowed(self))
 	{
+		self->client_predflags = PRDFL_FORCEOFF;
 		return;
 	}
 
-	if (g_globalvars.time < self->attack_finished)
+	if (self->client_time < self->attack_finished)
 	{
 		return;
 	}

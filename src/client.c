@@ -1553,6 +1553,138 @@ qbool CanConnect()
 	return true;
 }
 
+
+
+
+qbool WeaponPrediction_SendEntity(gedict_t *to, int sendflags)
+{
+	self = PROG_TO_EDICT(self->s.v.owner);
+
+	if (self != to)
+		return false;
+
+	WriteByte(MSG_ENTITY, NENT_WEAPONPRED);
+	WriteByte(MSG_ENTITY, sendflags);
+
+	
+	if (sendflags & 1)
+	{
+		WriteByte(MSG_ENTITY, self->s.v.impulse);
+		WriteShort(MSG_ENTITY, self->s.v.weapon);
+	}
+	if (sendflags & 2)
+		WriteByte(MSG_ENTITY, self->s.v.ammo_shells);
+	if (sendflags & 4)
+		WriteByte(MSG_ENTITY, self->s.v.ammo_nails);
+	if (sendflags & 8)
+		WriteByte(MSG_ENTITY, self->s.v.ammo_rockets);
+	if (sendflags & 16)
+		WriteByte(MSG_ENTITY, self->s.v.ammo_cells);
+
+	
+	if (sendflags & 32)
+	{
+		WriteFloat(MSG_ENTITY, self->attack_finished);
+		WriteFloat(MSG_ENTITY, self->client_nextthink);
+		WriteByte(MSG_ENTITY, self->client_thinkindex);
+	}
+
+	if (sendflags & 64)
+	{
+		WriteFloat(MSG_ENTITY, self->client_time);
+		WriteByte(MSG_ENTITY, self->s.v.weaponframe);
+	}
+
+	if (sendflags & 128)
+	{
+		WriteByte(MSG_ENTITY, self->client_predflags);
+		WriteByte(MSG_ENTITY, self->client_ping);
+	}
+	
+	return true;
+}
+
+
+void WeaponPrediction_MarkSendFlags()
+{
+	gedict_t *wep = self->weapon_pred;
+	int sendflags = 64;
+
+
+	if (wep->s.v.impulse != self->s.v.impulse || wep->s.v.weapon != self->s.v.weapon)
+	{
+		sendflags |= 1;
+		wep->s.v.impulse = self->s.v.impulse;
+		wep->s.v.weapon = self->s.v.weapon;
+	}
+	
+	if (wep->s.v.ammo_shells != self->s.v.ammo_shells)
+	{
+		sendflags |= 2;
+		wep->s.v.ammo_shells = self->s.v.ammo_shells;
+	}
+	if (wep->s.v.ammo_nails != self->s.v.ammo_nails)
+	{
+		sendflags |= 4;
+		wep->s.v.ammo_nails = self->s.v.ammo_nails;
+	}
+	if (wep->s.v.ammo_rockets != self->s.v.ammo_rockets)
+	{
+		sendflags |= 8;
+		wep->s.v.ammo_rockets = self->s.v.ammo_rockets;
+	}
+	if (wep->s.v.ammo_cells != self->s.v.ammo_cells)
+	{
+		sendflags |= 16;
+		wep->s.v.ammo_cells = self->s.v.ammo_cells;
+	}
+
+	if (wep->attack_finished != self->attack_finished || wep->client_think != self->client_think || wep->client_nextthink != self->client_nextthink)
+	{
+		sendflags |= 32;
+		wep->attack_finished = self->attack_finished;
+		wep->client_think = self->client_think;
+		wep->client_nextthink = self->client_nextthink;
+	}
+
+	if (wep->client_predflags != self->client_predflags || wep->client_ping != self->client_ping)
+	{
+		sendflags |= 128;
+		wep->client_predflags = self->client_predflags;
+		wep->client_ping = self->client_ping;
+	}
+
+
+	trap_SetSendNeeded(NUM_FOR_EDICT(wep), sendflags, 0);
+}
+
+
+void WeaponPrediction_Cleanup()
+{
+	if (self->weapon_pred != NULL)
+	{
+		ent_remove(self->weapon_pred);
+		self->weapon_pred = NULL;
+	}
+}
+
+
+void WeaponPrediction_CreateEnt()
+{
+	gedict_t *wep_values = spawn();
+	wep_values->s.v.owner = EDICT_TO_PROG(self);
+	trap_SetExtField_i(wep_values, "SendEntity", 1);
+	trap_SetExtField_f(wep_values, "pvsflags", 3);
+	wep_values->SendEntity = (func_t)WeaponPrediction_SendEntity;
+	trap_SetSendNeeded(NUM_FOR_EDICT(wep_values), 0xFFFFFF, 0);
+
+	self->weapon_pred = wep_values;
+}
+
+
+
+
+
 ////////////////
 // GlobalParams:
 // time
@@ -1565,7 +1697,7 @@ void ClientConnect()
 	int i, totalspots;
 
 	VIP_ShowRights(self);
-
+	
 	k_nochange = 0;
 
 	if (coop)
@@ -1714,6 +1846,9 @@ void ClientConnect()
 		}
 	}
 
+	self->antilag_data = antilag_create_player(self);
+	WeaponPrediction_CreateEnt();
+
 	MakeMOTD();
 
 #ifdef BOT_SUPPORT
@@ -1791,7 +1926,7 @@ void PutClientInServer(void)
 		self->s.v.weapon = W_BestWeapon();
 	W_SetCurrentAmmo();
 
-	self->attack_finished = g_globalvars.time;
+	self->attack_finished = self->client_time;
 	self->th_pain = player_pain;
 	self->th_die = PlayerDie;
 
@@ -2832,6 +2967,9 @@ void ClientDisconnect()
 
 	set_important_fields(self); // set classname == "" and etc
 
+	antilag_delete_player(self);
+	WeaponPrediction_Cleanup();
+
 // s: added conditional function call here
 	if (self->k_kicking)
 	{
@@ -3495,6 +3633,13 @@ void PlayerPreThink()
 		BackFromLag();
 	}
 
+
+
+	self->client_predflags = 0;
+	self->client_time += g_globalvars.frametime;
+	self->client_lastupdated = g_globalvars.time;
+	time_corrected = g_globalvars.time;
+
 	if (self->sc_stats && self->sc_stats_time && (self->sc_stats_time <= g_globalvars.time)
 			&& (match_in_progress != 1) && !isRACE())
 	{
@@ -3676,7 +3821,7 @@ void PlayerPreThink()
 		SetVector(self->s.v.velocity, 0, 0, 0);
 	}
 
-	if ((g_globalvars.time > self->attack_finished) && (self->s.v.currentammo == 0)
+	if ((self->client_time > self->attack_finished) && (self->s.v.currentammo == 0)
 			&& (self->s.v.weapon != IT_AXE) && (self->s.v.weapon != IT_HOOK))
 	{
 		self->s.v.weapon = W_BestWeapon();
@@ -3726,6 +3871,8 @@ void PlayerPreThink()
 			}
 		}
 	}
+
+	//G_sprint(self, 2, "%s ping char\n", ezinfokey(self, "ping"));
 
 	VectorCopy(self->s.v.velocity, self->old_vel);
 }
@@ -4260,6 +4407,17 @@ void PlayerPostThink()
 		return;
 	}
 
+	if (self->client_nextthink && self->client_time >= self->client_nextthink)
+	{
+		float held_client_time = self->client_time;
+
+		self->client_time = self->client_nextthink;
+		self->client_nextthink = 0;
+		((void(*)())(self->client_think))();
+
+		self->client_time = held_client_time;
+	}
+
 //team
 
 // WaterMove function call moved here from PlayerPreThink to avoid
@@ -4285,6 +4443,42 @@ void PlayerPostThink()
 #endif
 
 	W_WeaponFrame();
+
+	//
+	// Antilag and Weapon Prediction
+	antilag_log(self, self->antilag_data);
+	if (cvar("sv_antilag") == 1)
+	{
+		self->client_ping = atof(ezinfokey(self, "ping"));
+		if (cvar("k_midair") && (self->super_damage_finished > g_globalvars.time - (self->client_ping)/1000))
+			self->client_predflags = (int)self->client_predflags | PRDFL_MIDAIR;
+
+		self->client_ping = min(self->client_ping, ANTILAG_REWIND_MAXPROJECTILE * 1000);
+	}
+	else
+		self->client_ping = 0;
+
+
+	if (cvar("k_instagib") && cvar("k_instagib_custom_models"))
+	{
+		self->client_predflags = (int)self->client_predflags | PRDFL_COILGUN;
+		if (cvar("k_instagib") == 3)
+			self->client_predflags = (int)self->client_predflags | PRDFL_MIDAIR;
+	}
+
+	// can't predict hook reliably, so just force prediction off for now
+	if (self->s.v.weapon == IT_HOOK)
+		self->client_predflags = PRDFL_FORCEOFF;
+	else if (!readytostart())
+		self->client_predflags = PRDFL_FORCEOFF;
+	else if (!CA_can_fire(self))
+		self->client_predflags = PRDFL_FORCEOFF;
+	else if ((match_in_progress == 1) || !can_prewar(true))
+		self->client_predflags = PRDFL_FORCEOFF;
+
+	WeaponPrediction_MarkSendFlags();
+	//
+	//
 
 	race_player_post_think();
 

@@ -75,7 +75,7 @@
 
 #define MOD_NAME				("KTX")
 #define MOD_FULLNAME			("KTX: Kombat Teams eXtreme")
-#define MOD_VERSION				("1.43-dev")
+#define MOD_VERSION				("1.43-dev-r402")
 #define MOD_BUILD_DATE			(__DATE__ ", " __TIME__)
 #define MOD_SERVERINFO_MOD_KEY	("ktxver")
 #define MOD_URL					("https://github.com/QW-Group/ktx")
@@ -210,6 +210,8 @@ enum
 {
 	G_SETEXTFIELD = G_EXTENSIONS_FIRST,
 	G_GETEXTFIELD,
+	G_SETSENDNEEDED,
+	#ifdef FTESV
 	G_CHANGELEVEL_HUB,
 	G_URI_QUERY,
 	G_PARTICLEEFFECTNUM,
@@ -217,6 +219,7 @@ enum
 	G_POINTPARTICLES,
 	G_CLIENTSTAT,
 	G_POINTERSTAT,
+	#endif
 	G_EXTENSIONS_LAST
 };
 extern qbool haveextensiontab[G_EXTENSIONS_LAST-G_EXTENSIONS_FIRST];
@@ -324,6 +327,7 @@ void WriteEntity(int to, gedict_t *ed);
 void WriteByte(int to, int data);
 void WriteShort(int to, int data);
 void WriteLong(int to, int data);
+void WriteFloat(int to, float data);
 void WriteString(int to, char *data);
 void WriteAngle(int to, float data);
 void WriteCoord(int to, float data);
@@ -388,6 +392,7 @@ char* Enabled(float f);
 char* Allows(float f);
 char* Allowed(float f);
 char* OnOff(float f);
+char* AntilagModeString(float f);
 
 int get_scores1();
 int get_scores2();
@@ -458,12 +463,35 @@ void visible_to(gedict_t *viewer, gedict_t *first, int len, byte *visible);
 char* make_dots(char *dots, size_t dots_len, int cmd_max_len, char *cmd);
 
 //
-// subs.c
-void SUB_CalcMove(vec3_t tdest, float tspeed, void (*func)());
-void SUB_CalcMoveEnt(gedict_t *ent, vec3_t tdest, float tspeed, void (*func)());
-void SUB_UseTargets();
-void SetMovedir();
-void InitTrigger();
+//	antilag.c
+//
+#define PRDFL_MIDAIR	1
+#define PRDFL_COILGUN	2
+#define PRDFL_FORCEOFF	255
+extern float		time_corrected;
+void			antilag_lagmove(antilag_t *data, float goal_time);
+void			antilag_lagmove_all(gedict_t *e, float goal_time);
+void			antilag_lagmove_all_hitscan(gedict_t *e);
+void			antilag_lagmove_all_proj(gedict_t *owner, gedict_t *e);
+void			antilag_lagmove_all_proj_bounce(gedict_t *owner, gedict_t *e);
+void			antilag_unmove_specific(gedict_t *ent);
+void			antilag_unmove_all(void);
+antilag_t		*antilag_create_player(gedict_t *e);
+antilag_t		*antilag_create_world(gedict_t *e);
+void			antilag_delete_player(gedict_t *e);
+void			antilag_delete_world(gedict_t *e);
+void			antilag_log(gedict_t *e, antilag_t *antilag);
+
+
+//
+//  subs.c
+//
+void            SUB_CalcMove( vec3_t tdest, float tspeed, void ( *func ) () );
+void            SUB_CalcMoveEnt( gedict_t * ent, vec3_t tdest, float tspeed,
+				 void ( *func ) () );
+void            SUB_UseTargets();
+void            SetMovedir();
+void            InitTrigger();
 extern gedict_t *activator;
 
 //
@@ -575,10 +603,14 @@ qbool ISDEAD(gedict_t *e);
 
 qbool CanDamage(gedict_t *targ, gedict_t *inflictor);
 
-void T_Damage(gedict_t *targ, gedict_t *inflictor, gedict_t *attacker, float damage);
-void T_RadiusDamage(gedict_t *inflictor, gedict_t *attacker, float damage, gedict_t *ignore,
-					deathType_t dtype);
-void T_BeamDamage(gedict_t *attacker, float damage);
+void            T_Damage( gedict_t * targ, gedict_t * inflictor, gedict_t * attacker, float damage );
+void            T_RadiusDamage( gedict_t * inflictor, gedict_t * attacker, float damage,
+				gedict_t * ignore, deathType_t dtype );
+void            T_RadiusDamage_Ignore2(gedict_t * inflictor, gedict_t * attacker, float damage,
+				gedict_t * ignore, gedict_t * ignore2, deathType_t dtype);
+void			T_RadiusDamageApply(gedict_t *inflictor, gedict_t *attacker, gedict_t *head, float damage,
+				deathType_t dtype);
+void            T_BeamDamage( gedict_t * attacker, float damage );
 
 //items.c
 void DropPowerup(float timeleft, int powerup);

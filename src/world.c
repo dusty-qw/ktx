@@ -850,6 +850,7 @@ void FirstFrame()
 	RegisterCvarEx("k_keepspectalkindemos", "0");
 	RegisterCvar("k_sayteam_to_spec");
 	RegisterCvar("k_dis");
+	RegisterCvar("k_drp");
 	RegisterCvar("dq");
 	RegisterCvar("dr");
 	RegisterCvar("dp");
@@ -1049,6 +1050,8 @@ void FirstFrame()
 	RegisterCvarEx("k_privategame_force_reconnect", "1"); // when voting for private game, kick unauthed players
 
 // below globals changed only here
+	
+
 
 	k_matchLess = cvar("k_matchless");
 	k_matchLess_idle_time =
@@ -1774,6 +1777,7 @@ void CheckTiming();
 void check_fcheck();
 void CheckTeamStatus();
 void DoMVDAutoTrack(void);
+void antilag_updateworld();
 
 void FixNoSpecs(void);
 
@@ -1858,4 +1862,7 @@ void StartFrame(int time)
 	check_fcheck();
 
 	TeamplayGameTick();
+
+	time_corrected = time;
+	antilag_updateworld();
 }
