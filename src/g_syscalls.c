@@ -507,8 +507,6 @@ void trap_SetSendNeeded(int subject, int flags, int to)
 	syscall(G_SETSENDNEEDED, subject, flags, to);
 }
 
-
-#ifdef FTESV
 void trap_changelevelHub(const char *name, const char *entityname, const char *startspot)
 {
 	syscall(G_CHANGELEVEL_HUB, name, entityname, startspot);

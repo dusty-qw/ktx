@@ -211,7 +211,6 @@ enum
 	G_SETEXTFIELD = G_EXTENSIONS_FIRST,
 	G_GETEXTFIELD,
 	G_SETSENDNEEDED,
-	#ifdef FTESV
 	G_CHANGELEVEL_HUB,
 	G_URI_QUERY,
 	G_PARTICLEEFFECTNUM,
@@ -219,7 +218,6 @@ enum
 	G_POINTPARTICLES,
 	G_CLIENTSTAT,
 	G_POINTERSTAT,
-	#endif
 	G_EXTENSIONS_LAST
 };
 extern qbool haveextensiontab[G_EXTENSIONS_LAST-G_EXTENSIONS_FIRST];
@@ -487,8 +485,7 @@ void			antilag_log(gedict_t *e, antilag_t *antilag);
 //  subs.c
 //
 void            SUB_CalcMove( vec3_t tdest, float tspeed, void ( *func ) () );
-void            SUB_CalcMoveEnt( gedict_t * ent, vec3_t tdest, float tspeed,
-				 void ( *func ) () );
+void            SUB_CalcMoveEnt( gedict_t * ent, vec3_t tdest, float tspeed, void (*func)());
 void            SUB_UseTargets();
 void            SetMovedir();
 void            InitTrigger();
