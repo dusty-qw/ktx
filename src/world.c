@@ -1776,6 +1776,7 @@ extern float intermission_exittime;
 void CheckTiming();
 void check_fcheck();
 void CheckTeamStatus();
+void SendSpecInfo();
 void DoMVDAutoTrack(void);
 void antilag_updateworld();
 
@@ -1854,6 +1855,8 @@ void StartFrame(int time)
 	check_monsters_respawn();
 
 	CheckTeamStatus();
+
+	SendSpecInfo();
 
 	CheckAutoXonX(true); // switch XonX mode dependant on players + specs count
 
