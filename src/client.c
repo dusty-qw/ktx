@@ -4651,8 +4651,7 @@ void CheckTeamStatus()
 void SendSpecInfo()
 {
 	gedict_t *t, *p;
-	int cl;
-	char *tracking, *nick;
+	int cl, tr;
 
 	static double lastupdate = 0;
 
@@ -4665,23 +4664,8 @@ void SendSpecInfo()
 
 	for (t = world; (t = find_spc(t));)
 	{
-		if (t->ct != ctSpec)
-		{
-			continue;
-		}
-
 		cl = NUM_FOR_EDICT(t) - 1;
-		tracking = TrackWhom(t);
-
-		if (strnull(nick = ezinfokey(t, "k_nick"))) // get nick, if any, do not send name, client can guess it too
-		{
-			nick = ezinfokey(t, "k");
-		}
-
-		if (nick[0] && nick[1] && nick[2] && nick[3])
-		{
-			nick[4] = 0; // truncate nick to 4 symbols
-		}
+		tr = NUM_FOR_EDICT(PROG_TO_EDICT(t->s.v.goalentity)) - 1;	// num for player spec is tracking
 
 		for (p = world; (p = find_client(p));)
 		{
@@ -4690,7 +4674,7 @@ void SendSpecInfo()
 				continue; // ignore self
 			}
 
-			stuffcmd_flags(p, STUFFCMD_IGNOREINDEMO, "//specinfo %d \"%s\" \"%s\"\n", cl, nick, tracking);
+			stuffcmd_flags(p, STUFFCMD_IGNOREINDEMO, "//spi %d %d\n", cl, tr);
 		}
 	}
 }
