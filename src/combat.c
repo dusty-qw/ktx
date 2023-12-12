@@ -501,7 +501,7 @@ void T_Damage(gedict_t *targ, gedict_t *inflictor, gedict_t *attacker, float dam
 			}
 			else 
 			{
-				if (targ->invincible_sound < g_globalvars.time)
+				if (targ->in_play && (targ->invincible_sound < g_globalvars.time))
 				{
 					sound(targ, CHAN_AUTO, "items/protect3.wav", 0.75, ATTN_NORM);
 					targ->invincible_sound = g_globalvars.time + 2;
