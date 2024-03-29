@@ -1894,7 +1894,9 @@ void StartFrame(int time)
 	check_fcheck();
 
 	TeamplayGameTick();
-
+	
+	WillPause();
+	
 	time_corrected = time;
 	antilag_updateworld();
 }

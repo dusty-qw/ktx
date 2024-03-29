@@ -658,6 +658,7 @@ void log_close(void);
 extern fileHandle_t log_handle;
 
 // commands.c
+void WillPause();
 typedef struct cmd_s
 {
 	char *name;
