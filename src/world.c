@@ -1890,6 +1890,11 @@ void StartFrame(int time)
 	check_fcheck();
 
 	TeamplayGameTick();
+	
+	WillPause();
+	
+	time_corrected = time;
+	antilag_updateworld();
 }
 
 // Check the same spawnflags as items only visible in DM for monsters as well.
