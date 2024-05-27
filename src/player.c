@@ -1282,10 +1282,16 @@ void GibPlayer()
 }
 
 void StartDie();
+void PlayerBreak();
 
 void PlayerDie()
 {
 	self->ca_alive = false;
+
+	if (!self->isBot && tot_mode_enabled() && cvar(FB_CVAR_BREAK_ON_DEATH))
+	{
+		PlayerBreak();
+	}
 
 	DropPowerups();
 
