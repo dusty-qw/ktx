@@ -143,6 +143,11 @@ intptr_t trap_movetogoal(float dist);
 
 void trap_VisibleTo(intptr_t viewer, intptr_t first, intptr_t len, byte *visible);
 
+// Raw calls, use _i and _f helpers instead.
+void trap_SetExtField(gedict_t *ed, const char *fieldname, int val);
+int trap_GetExtField(gedict_t *ed, const char *fieldname);
+
+// Checks for server support before call
 void trap_SetExtField_i(gedict_t *ed, const char *fieldname, int val);
 void trap_SetExtField_f(gedict_t *ed, const char *fieldname, float val);
 int trap_GetExtField_i(gedict_t *ed, const char *fieldname);
