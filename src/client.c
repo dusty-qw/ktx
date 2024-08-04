@@ -53,6 +53,7 @@ void ImpulseCommands();
 void StartDie();
 void ZeroFpsStats();
 void item_megahealth_rot();
+void SendSpecInfo(gedict_t *spec, gedict_t *target_client);
 
 void del_from_specs_favourites(gedict_t *rm);
 void item_megahealth_rot(void);
@@ -1845,6 +1846,8 @@ void ClientConnect()
 			self->spawn_weights[i] = totalspots;
 		}
 	}
+
+	SendSpecInfo(NULL, self); // get all spectator info
 
 	self->antilag_data = antilag_create_player(self);
 	WeaponPrediction_CreateEnt();
@@ -4673,33 +4676,44 @@ void CheckTeamStatus()
 	}
 }
 
-void SendSpecInfo()
+void SendSpecInfo(gedict_t *spec, gedict_t *target_client)
 {
 	gedict_t *t, *p;
 	int cl, tr;
 
-	static double lastupdate = 0;
-
-	if (g_globalvars.time - lastupdate < 2)
+	if (spec)	// if spec has a value, we only want to send that spec's info
 	{
-		return;
-	}
-
-	lastupdate = g_globalvars.time;
-
-	for (t = world; (t = find_spc(t));)
-	{
-		cl = NUM_FOR_EDICT(t) - 1;
-		tr = NUM_FOR_EDICT(PROG_TO_EDICT(t->s.v.goalentity)) - 1;	// num for player spec is tracking
+		cl = NUM_FOR_EDICT(spec) - 1;
+		tr = NUM_FOR_EDICT(PROG_TO_EDICT(spec->s.v.goalentity)) - 1;	// num for player spec is tracking
 
 		for (p = world; (p = find_client(p));)
 		{
-			if (p == t)
-			{
+			if (p == spec)
 				continue; // ignore self
-			}
 
 			stuffcmd_flags(p, STUFFCMD_IGNOREINDEMO, "//spi %d %d\n", cl, tr);
+		}
+	}
+	else {
+		for (t = world; (t = find_spc(t));)
+		{
+			cl = NUM_FOR_EDICT(t) - 1;
+			tr = NUM_FOR_EDICT(PROG_TO_EDICT(t->s.v.goalentity)) - 1;	// num for player spec is tracking
+
+			if (target_client && target_client != t)
+			{
+				stuffcmd_flags(target_client, STUFFCMD_IGNOREINDEMO, "//spi %d %d\n", cl, tr);
+			}
+			else // if no target client is specified, send to everyone
+			{
+				for (p = world; (p = find_client(p));)
+				{
+					if (p == t)
+						continue; // ignore self
+
+					stuffcmd_flags(p, STUFFCMD_IGNOREINDEMO, "//spi %d %d\n", cl, tr);
+				}
+			}
 		}
 	}
 }
