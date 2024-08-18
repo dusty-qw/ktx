@@ -964,6 +964,8 @@ typedef struct gedict_s
 	float fLastSideMoveSpeed;
 	int   matchStrafeChangeCount;
 	int   matchPerfectStrafeCount;
+	int   totalStrafeChangeCount;
+	int   totalPerfectStrafeCount;
 	int   nullStrafeCount;
 // SOCD
 
