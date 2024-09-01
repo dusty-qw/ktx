@@ -43,16 +43,16 @@ vec3_t VEC_HULL2_MAX =
 int modelindex_eyes, modelindex_player, vwep_index;
 
 qbool can_prewar(qbool fire);
-void IdlebotCheck();
-void CheckAll();
-void PlayerStats();
-void ExitCaptain();
-void CheckFinishCaptain();
-void MakeMOTD();
-void ImpulseCommands();
-void StartDie();
-void ZeroFpsStats();
-void item_megahealth_rot();
+void IdlebotCheck(void);
+void CheckAll(void);
+void PlayerStats(void);
+void ExitCaptain(void);
+void CheckFinishCaptain(void);
+void MakeMOTD(void);
+void ImpulseCommands(void);
+void StartDie(void);
+void ZeroFpsStats(void);
+void item_megahealth_rot(void);
 void SendSpecInfo(gedict_t *spec, gedict_t *target_client);
 
 void del_from_specs_favourites(gedict_t *rm);
