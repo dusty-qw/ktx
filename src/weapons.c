@@ -25,9 +25,9 @@
 
 #include "g_local.h"
 
-void ReportMe();
-void AdminImpBot();
-void CaptainPickPlayer();
+void ReportMe(void);
+void AdminImpBot(void);
+void CaptainPickPlayer(void);
 void ChasecamToggleButton(void);
 void ClanArenaTrackingToggleButton(void);
 
@@ -46,7 +46,7 @@ void AmmoUsed(gedict_t *player)
 }
 
 // called by SP_worldspawn
-void W_Precache()
+void W_Precache(void)
 {
 	trap_precache_sound("weapons/r_exp3.wav");	// new rocket explosion
 	trap_precache_sound("weapons/rocket1i.wav");	// spike gun
@@ -68,7 +68,7 @@ void W_Precache()
 }
 
 void W_FireSpikes(float ox);
-void W_FireLightning();
+void W_FireLightning(void);
 
 
 qbool SendEntity_Projectile(gedict_t *to, int sendflags)
@@ -120,7 +120,7 @@ qbool SendEntity_Projectile(gedict_t *to, int sendflags)
  W_FireAxe
  ================
  */
-void W_FireAxe()
+void W_FireAxe(void)
 {
 	vec3_t source, dest;
 	vec3_t org;
@@ -323,7 +323,7 @@ float blood_count;
 vec3_t puff_org;
 float puff_count;
 
-void ClearMultiDamage()
+void ClearMultiDamage(void)
 {
 	multi_ent = world;
 	multi_damage = 0;
@@ -332,7 +332,7 @@ void ClearMultiDamage()
 	multi_damage_type = dtNONE;
 }
 
-void ApplyMultiDamage()
+void ApplyMultiDamage(void)
 {
 	if (multi_ent == world)
 	{
@@ -362,7 +362,7 @@ void AddMultiDamage(gedict_t *hit, float damage)
 	}
 }
 
-void Multi_Finish()
+void Multi_Finish(void)
 {
 	if (puff_count)
 	{
@@ -477,7 +477,7 @@ void TraceAttack(float damage, vec3_t dir, qbool send_effects)
  Used by coilgun for Instagib mode, bullet doesn't stop at first player, it goes through till it hits wall
  ================
  */
-void T_InstaKickback();
+void T_InstaKickback(void);
 void FireInstaBullet(vec3_t dir, deathType_t deathtype)
 {
 	vec3_t src, dst, tmp;
@@ -795,7 +795,7 @@ void FireBullets(float shotcount, vec3_t dir, float spread_x, float spread_y, fl
 
 #ifdef HITBOXCHECK
 
-void W_FireShotgun()
+void W_FireShotgun(void)
 {
 	qbool classic_shotgun = cvar("k_classic_shotgun");
 	vec3_t dir, s_dir, src, o_src, eorg, tmp;
@@ -856,7 +856,7 @@ void W_FireShotgun()
 	}
 }
 #else
-void W_FireShotgun()
+void W_FireShotgun(void)
 {
 	vec3_t dir;
 	int bullets = 6;
@@ -914,7 +914,7 @@ void W_FireShotgun()
  W_FireSuperShotgun
  ================
  */
-void W_FireSuperShotgun()
+void W_FireSuperShotgun(void)
 {
 	vec3_t dir;
 	int bullets = (k_yawnmode ? 21 : 14);
@@ -977,7 +977,7 @@ void FixQuad(gedict_t *owner)
 	}
 }
 
-void T_InstaKickback()
+void T_InstaKickback(void)
 {
 	vec3_t tmp;
 
@@ -1046,7 +1046,8 @@ void T_MissileExplode_Antilag()
 	ent_remove(self);
 }
 
-void T_MissileTouch()
+
+void T_MissileTouch(void)
 {
 	float damg;
 	vec3_t tmp;
@@ -1180,7 +1181,7 @@ void T_MissileTouch()
  ================
  */
 
-void W_FireRocket()
+void W_FireRocket(void)
 {
 	WS_Mark(self, wpRL);
 
@@ -1330,7 +1331,7 @@ void LightningDamage(vec3_t p1, vec3_t p2, gedict_t *from, float damage)
 	}
 }
 
-void W_FireLightning()
+void W_FireLightning(void)
 {
 	vec3_t org;
 	float cells;
@@ -1458,7 +1459,7 @@ void W_FireLightning()
 
 //=============================================================================
 
-void GrenadeExplode()
+void GrenadeExplode(void)
 {
 	if (self->voided)
 	{
@@ -1489,7 +1490,7 @@ void GrenadeExplode()
 	ent_remove(self);
 }
 
-void GrenadeTouch()
+void GrenadeTouch(void)
 {
 	if (other == PROG_TO_EDICT(self->s.v.owner))
 	{
@@ -1530,7 +1531,7 @@ void GrenadeTouch()
  W_FireGrenade
  ================
  */
-void W_FireGrenade()
+void W_FireGrenade(void)
 {
 	float r1 = crandom(), r2 = crandom();
 	vec3_t ang;
@@ -1635,7 +1636,7 @@ void W_FireGrenade()
 
 //=============================================================================
 
-void spike_touch();
+void spike_touch(void);
 
 /*
  ===============
@@ -1699,7 +1700,7 @@ static qbool race_ignore_spike(gedict_t *self, gedict_t *other)
 	return PROG_TO_EDICT(self->s.v.owner)->ct == ctPlayer;
 }
 
-void spike_touch()
+void spike_touch(void)
 {
 	if (other == PROG_TO_EDICT(self->s.v.owner))
 	{
@@ -1772,7 +1773,7 @@ void spike_touch()
 	ent_remove(self);
 }
 
-void superspike_touch()
+void superspike_touch(void)
 {
 	if (other == PROG_TO_EDICT(self->s.v.owner))
 	{
@@ -1831,7 +1832,7 @@ void superspike_touch()
 	ent_remove(self);
 }
 
-void W_FireSuperSpikes()
+void W_FireSuperSpikes(void)
 {
 	vec3_t dir, tmp;
 
@@ -1947,7 +1948,7 @@ void W_FireSpikes(float ox)
  ===============================================================================
  */
 
-void W_SetCurrentAmmo()
+void W_SetCurrentAmmo(void)
 {
 	qbool need_fix = false;
 	int items;
@@ -2177,7 +2178,7 @@ void W_SetCurrentAmmo()
 	self->s.v.items = items;
 }
 
-float W_BestWeapon()
+float W_BestWeapon(void)
 {
 	int it = self->s.v.items;
 	char *w_rank = ezinfokey(self, "w_rank");
@@ -2272,7 +2273,7 @@ float W_BestWeapon()
 	return ((it & IT_AXE) ? IT_AXE : 0);
 }
 
-int W_CheckNoAmmo()
+int W_CheckNoAmmo(void)
 {
 	if (self->s.v.currentammo > 0)
 	{
@@ -2299,7 +2300,7 @@ int W_CheckNoAmmo()
  An attack impulse can be triggered now
  ============
  */
-void W_Attack()
+void W_Attack(void)
 {
 	float r;
 
@@ -2714,7 +2715,7 @@ qbool W_ChangeWeapon(int wp)
  Go to the next weapon with ammo
  ============
  */
-qbool CycleWeaponCommand()
+qbool CycleWeaponCommand(void)
 {
 	int i, it, am;
 
@@ -2813,7 +2814,7 @@ qbool CycleWeaponCommand()
  Go to the prev weapon with ammo
  ============
  */
-qbool CycleWeaponReverseCommand()
+qbool CycleWeaponReverseCommand(void)
 {
 	int i, it, am;
 
@@ -2912,10 +2913,10 @@ qbool CycleWeaponReverseCommand()
 	return true;
 }
 
-void kfjump();
-void krjump();
+void kfjump(void);
+void krjump(void);
 
-int CaptainImpulses()
+int CaptainImpulses(void)
 {
 	if (k_captains != 2)
 	{
@@ -2939,7 +2940,7 @@ int CaptainImpulses()
  ============
  */
 
-void ImpulseCommands()
+void ImpulseCommands(void)
 {
 	qbool clear = true;
 	int capt, impulse = self->s.v.impulse;
@@ -3088,7 +3089,7 @@ captains:
  Called every frame so impulse events can be handled as well as possible
  ============
  */
-void W_WeaponFrame()
+void W_WeaponFrame(void)
 {
 	if ((self->spawn_time + 0.05) > g_globalvars.time)
 	{
@@ -3166,7 +3167,7 @@ void W_WeaponFrame()
  Plays sound if needed
  ========
  */
-void SuperDamageSound()
+void SuperDamageSound(void)
 {
 	if (self->super_damage_finished > g_globalvars.time)
 	{

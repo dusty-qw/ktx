@@ -25,7 +25,7 @@
 
 #include "g_local.h"
 
-void bubble_bob();
+void bubble_bob(void);
 void BotPlayerDeathEvent(gedict_t *player);
 void AmmoUsed(gedict_t *player);
 
@@ -37,9 +37,9 @@ void AmmoUsed(gedict_t *player);
  ==============================================================================
  */
 
-void player_run();
+void player_run(void);
 
-void player_stand1()
+void player_stand1(void)
 {
 	self->s.v.frame = 17;
 	self->think = (func_t) player_stand1;
@@ -77,7 +77,7 @@ void player_stand1()
 	self->walkframe = self->walkframe + 1;
 }
 
-void player_run()
+void player_run(void)
 {
 	self->s.v.frame = 6;
 	self->think = (func_t) player_run;
@@ -130,7 +130,7 @@ void player_run()
 	self->walkframe = self->walkframe + 1;
 }
 
-void muzzleflash()
+void muzzleflash(void)
 {
 	WriteByte( MSG_MULTICAST, SVC_MUZZLEFLASH);
 	WriteEntity( MSG_MULTICAST, self);
@@ -142,7 +142,7 @@ void player_dummyanim()
 
 }
 
-void player_chain1()
+void player_chain1(void)
 {
 	self->s.v.frame = 137;
 	self->think = (func_t) player_chain2;
@@ -151,7 +151,7 @@ void player_chain1()
 	GrappleThrow();
 }
 
-void player_chain2()
+void player_chain2(void)
 {
 	self->s.v.frame = 138;
 	self->think = (func_t) player_chain3;
@@ -159,7 +159,7 @@ void player_chain2()
 	self->s.v.weaponframe = 3;
 }
 
-void player_chain3()
+void player_chain3(void)
 {
 	self->s.v.frame = 139;
 	self->s.v.weaponframe = 3;
@@ -180,7 +180,7 @@ void player_chain3()
 	}
 }
 
-void player_chain4()
+void player_chain4(void)
 {
 	// Original ctf grapple used frame 73 here, but that causes problems with cl_deadbodyfilter 2
 	// Frame 139 is a decent alternative especially given that 73 never looked good anyway
@@ -203,7 +203,7 @@ void player_chain4()
 	}
 }
 
-void player_chain5()
+void player_chain5(void)
 {
 	self->s.v.frame = 140;
 	self->s.v.weaponframe = 5;
@@ -213,7 +213,7 @@ void player_chain5()
 	self->s.v.nextthink = next_frame();
 }
 
-void player_shot1()
+void player_shot1(void)
 {
 	self->s.v.frame = 113;
 	self->client_think = (func_t)player_shot2;
@@ -227,7 +227,7 @@ void player_shot1()
 	muzzleflash();
 }
 
-void player_shot2()
+void player_shot2(void)
 {
 	self->s.v.frame = 114;
 	self->client_think = (func_t)player_shot3;
@@ -240,7 +240,7 @@ void player_shot2()
 	self->s.v.weaponframe = 2;
 }
 
-void player_shot3()
+void player_shot3(void)
 {
 	self->s.v.frame = 115;
 	self->client_think = (func_t)player_shot4;
@@ -253,7 +253,7 @@ void player_shot3()
 	self->s.v.weaponframe = 3;
 }
 
-void player_shot4()
+void player_shot4(void)
 {
 	self->s.v.frame = 116;
 	self->client_think = (func_t)player_shot5;
@@ -266,7 +266,7 @@ void player_shot4()
 	self->s.v.weaponframe = 4;
 }
 
-void player_shot5()
+void player_shot5(void)
 {
 	self->s.v.frame = 117;
 	self->client_think = (func_t)player_shot6;
@@ -279,7 +279,7 @@ void player_shot5()
 	self->s.v.weaponframe = 5;
 }
 
-void player_shot6()
+void player_shot6(void)
 {
 	self->s.v.frame = 118;
 	self->walkframe = 0;
@@ -293,7 +293,7 @@ void player_shot6()
 	self->s.v.weaponframe = 6;
 }
 
-void player_axe1()
+void player_axe1(void)
 {
 	self->s.v.frame = 119;
 	self->client_think = (func_t)player_axe2;
@@ -306,7 +306,7 @@ void player_axe1()
 	self->s.v.weaponframe = 1;
 }
 
-void player_axe2()
+void player_axe2(void)
 {
 	self->s.v.frame = 120;
 	self->client_think = (func_t)player_axe3;
@@ -319,7 +319,7 @@ void player_axe2()
 	self->s.v.weaponframe = 2;
 }
 
-void player_axe3()
+void player_axe3(void)
 {
 	self->s.v.frame = 121;
 	self->client_think = (func_t)player_axe4;
@@ -333,7 +333,7 @@ void player_axe3()
 	W_FireAxe();
 }
 
-void player_axe4()
+void player_axe4(void)
 {
 	self->s.v.frame = 122;
 	self->walkframe = 0;
@@ -347,7 +347,7 @@ void player_axe4()
 	self->s.v.weaponframe = 4;
 }
 
-void player_axeb1()
+void player_axeb1(void)
 {
 	self->s.v.frame = 125;
 	self->client_think = (func_t)player_axeb2;
@@ -360,7 +360,7 @@ void player_axeb1()
 	self->s.v.weaponframe = 5;
 }
 
-void player_axeb2()
+void player_axeb2(void)
 {
 	self->s.v.frame = 126;
 	self->client_think = (func_t)player_axeb3;
@@ -373,7 +373,7 @@ void player_axeb2()
 	self->s.v.weaponframe = 6;
 }
 
-void player_axeb3()
+void player_axeb3(void)
 {
 	self->s.v.frame = 127;
 	self->client_think = (func_t)player_axeb4;
@@ -387,7 +387,7 @@ void player_axeb3()
 	W_FireAxe();
 }
 
-void player_axeb4()
+void player_axeb4(void)
 {
 	self->s.v.frame = 128;
 	self->walkframe = 0;
@@ -401,7 +401,7 @@ void player_axeb4()
 	self->s.v.weaponframe = 8;
 }
 
-void player_axec1()
+void player_axec1(void)
 {
 	self->s.v.frame = 131;
 	self->client_think = (func_t)player_axec2;
@@ -414,7 +414,7 @@ void player_axec1()
 	self->s.v.weaponframe = 1;
 }
 
-void player_axec2()
+void player_axec2(void)
 {
 	self->s.v.frame = 132;
 	self->client_think = (func_t)player_axec3;
@@ -427,7 +427,7 @@ void player_axec2()
 	self->s.v.weaponframe = 2;
 }
 
-void player_axec3()
+void player_axec3(void)
 {
 	self->s.v.frame = 133;
 	self->client_think = (func_t)player_axec4;
@@ -441,7 +441,7 @@ void player_axec3()
 	W_FireAxe();
 }
 
-void player_axec4()
+void player_axec4(void)
 {
 	self->s.v.frame = 134;
 	self->walkframe = 0;
@@ -455,7 +455,7 @@ void player_axec4()
 	self->s.v.weaponframe = 4;
 }
 
-void player_axed1()
+void player_axed1(void)
 {
 	self->s.v.frame = 137;
 	self->client_think = (func_t)player_axed2;
@@ -468,7 +468,7 @@ void player_axed1()
 	self->s.v.weaponframe = 5;
 }
 
-void player_axed2()
+void player_axed2(void)
 {
 	self->s.v.frame = 138;
 	self->client_think = (func_t)player_axed3;
@@ -481,7 +481,7 @@ void player_axed2()
 	self->s.v.weaponframe = 6;
 }
 
-void player_axed3()
+void player_axed3(void)
 {
 	self->s.v.frame = 139;
 	self->client_think = (func_t)player_axed4;
@@ -495,7 +495,7 @@ void player_axed3()
 	W_FireAxe();
 }
 
-void player_axed4()
+void player_axed4(void)
 {
 	self->s.v.frame = 140;
 	self->walkframe = 0;
@@ -512,7 +512,7 @@ void player_axed4()
 //============================================================================
 
 // this shit present in ktpro, but test does't show why we need this, because 99.9% of time diff is just 0
-void set_idealtime()
+void set_idealtime(void)
 {
 	float diff = self->s.v.ltime - g_globalvars.time;
 
@@ -524,7 +524,7 @@ void set_idealtime()
 	self->s.v.nextthink = self->s.v.ltime = g_globalvars.time + diff + 0.1;
 }
 
-void player_nail1()
+void player_nail1(void)
 {
 	self->s.v.frame = 103;
 	self->client_think = (func_t)player_nail2;
@@ -557,7 +557,7 @@ void player_nail1()
 	AmmoUsed(self);
 }
 
-void player_nail2()
+void player_nail2(void)
 {
 	self->s.v.frame = 104;
 	self->client_think = (func_t) player_nail1;
@@ -592,7 +592,7 @@ void player_nail2()
 
 //============================================================================
 
-void player_light1()
+void player_light1(void)
 {
 	self->s.v.frame = 105;
 	self->client_think = (func_t)player_light2;
@@ -633,7 +633,7 @@ void player_light1()
 	self->attack_finished = self->client_time + 0.2;
 }
 
-void player_light2()
+void player_light2(void)
 {
 	self->s.v.frame = 106;
 	self->client_think = (func_t)player_light1;
@@ -675,7 +675,7 @@ void player_light2()
 }
 
 //============================================================================
-void player_rocket1()
+void player_rocket1(void)
 {
 	self->s.v.frame = 107;
 	self->client_think = (func_t)player_rocket2;
@@ -689,7 +689,7 @@ void player_rocket1()
 	muzzleflash();
 }
 
-void player_rocket2()
+void player_rocket2(void)
 {
 	self->s.v.frame = 108;
 	self->client_think = (func_t)player_rocket3;
@@ -702,7 +702,7 @@ void player_rocket2()
 	self->s.v.weaponframe = 2;
 }
 
-void player_rocket3()
+void player_rocket3(void)
 {
 	self->s.v.frame = 109;
 	self->client_think = (func_t)player_rocket4;
@@ -715,7 +715,7 @@ void player_rocket3()
 	self->s.v.weaponframe = 3;
 }
 
-void player_rocket4()
+void player_rocket4(void)
 {
 	self->s.v.frame = 110;
 	self->client_think = (func_t)player_rocket5;
@@ -728,7 +728,7 @@ void player_rocket4()
 	self->s.v.weaponframe = 4;
 }
 
-void player_rocket5()
+void player_rocket5(void)
 {
 	self->s.v.frame = 111;
 	self->client_think = (func_t)player_rocket6;
@@ -741,7 +741,7 @@ void player_rocket5()
 	self->s.v.weaponframe = 5;
 }
 
-void player_rocket6()
+void player_rocket6(void)
 {
 	self->s.v.frame = 112;
 	self->walkframe = 0;
@@ -757,7 +757,7 @@ void player_rocket6()
 
 void DeathBubbles(float num_bubbles);
 
-void PainSound()
+void PainSound(void)
 {
 	int rs;
 
@@ -881,7 +881,7 @@ void PainSound()
 	return;
 }
 
-void player_pain1()
+void player_pain1(void)
 {
 	self->s.v.frame = 35;
 	self->think = (func_t) player_pain2;
@@ -891,7 +891,7 @@ void player_pain1()
 	self->s.v.weaponframe = 0;
 }
 
-void player_pain2()
+void player_pain2(void)
 {
 	self->s.v.frame = 36;
 	self->think = (func_t) player_pain3;
@@ -899,7 +899,7 @@ void player_pain2()
 
 }
 
-void player_pain3()
+void player_pain3(void)
 {
 	self->s.v.frame = 37;
 	self->think = (func_t) player_pain4;
@@ -907,7 +907,7 @@ void player_pain3()
 
 }
 
-void player_pain4()
+void player_pain4(void)
 {
 	self->s.v.frame = 38;
 	self->think = (func_t) player_pain5;
@@ -915,7 +915,7 @@ void player_pain4()
 
 }
 
-void player_pain5()
+void player_pain5(void)
 {
 	self->s.v.frame = 39;
 	self->think = (func_t) player_pain6;
@@ -923,7 +923,7 @@ void player_pain5()
 
 }
 
-void player_pain6()
+void player_pain6(void)
 {
 	self->s.v.frame = 40;
 	self->walkframe = 0;
@@ -932,7 +932,7 @@ void player_pain6()
 
 }
 
-void player_axpain1()
+void player_axpain1(void)
 {
 	self->s.v.frame = 29;
 	self->think = (func_t) player_axpain2;
@@ -942,7 +942,7 @@ void player_axpain1()
 	self->s.v.weaponframe = 0;
 }
 
-void player_axpain2()
+void player_axpain2(void)
 {
 	self->s.v.frame = 30;
 	self->think = (func_t) player_axpain3;
@@ -950,7 +950,7 @@ void player_axpain2()
 
 }
 
-void player_axpain3()
+void player_axpain3(void)
 {
 	self->s.v.frame = 31;
 	self->think = (func_t) player_axpain4;
@@ -958,7 +958,7 @@ void player_axpain3()
 
 }
 
-void player_axpain4()
+void player_axpain4(void)
 {
 	self->s.v.frame = 32;
 	self->think = (func_t) player_axpain5;
@@ -966,7 +966,7 @@ void player_axpain4()
 
 }
 
-void player_axpain5()
+void player_axpain5(void)
 {
 	self->s.v.frame = 33;
 	self->think = (func_t) player_axpain6;
@@ -974,7 +974,7 @@ void player_axpain5()
 
 }
 
-void player_axpain6()
+void player_axpain6(void)
 {
 	self->s.v.frame = 34;
 	self->walkframe = 0;
@@ -1017,14 +1017,14 @@ void player_pain(struct gedict_s *attacker, float take)
 	}
 }
 
-void player_diea1();
-void player_dieb1();
-void player_diec1();
-void player_died1();
-void player_diee1();
-void player_die_ax1();
+void player_diea1(void);
+void player_dieb1(void);
+void player_diec1(void);
+void player_died1(void);
+void player_diee1(void);
+void player_die_ax1(void);
 
-void DeathBubblesSpawn()
+void DeathBubblesSpawn(void)
 {
 	gedict_t *bubble;
 
@@ -1080,7 +1080,7 @@ void DeathBubbles(float num_bubbles)
 	return;
 }
 
-void DeathSound()
+void DeathSound(void)
 {
 	int rs;
 
@@ -1124,7 +1124,7 @@ void DeathSound()
 	return;
 }
 
-void PlayerDead()
+void PlayerDead(void)
 {
 	self->s.v.nextthink = -1;
 	self->client_nextthink = 0;
@@ -1231,7 +1231,7 @@ void ThrowHead(char *gibname, float dm)
 	SetVector(self->s.v.avelocity, 0, crandom() * 600, 0);
 }
 
-void GibPlayer()
+void GibPlayer(void)
 {
 	qbool bloodfest_round_connect = (k_bloodfest && !self->ready); // in case of bloodfest and connecion during round.
 	gedict_t *p;
@@ -1281,10 +1281,10 @@ void GibPlayer()
 	}
 }
 
-void StartDie();
-void PlayerBreak();
+void StartDie(void);
+void PlayerBreak(void);
 
-void PlayerDie()
+void PlayerDie(void)
 {
 	self->ca_alive = false;
 
@@ -1378,7 +1378,7 @@ void PlayerDie()
 
 // created this function because it is called from client.qc as well
 // was originally part of PlayerDie() and hasn't been altered
-void StartDie()
+void StartDie(void)
 {
 	if (self->s.v.weapon == IT_AXE)
 	{
@@ -1438,7 +1438,7 @@ void StartDie()
 	}
 }
 
-void player_diea1()
+void player_diea1(void)
 {
 	self->s.v.frame = 50;
 	self->think = (func_t) player_diea2;
@@ -1446,7 +1446,7 @@ void player_diea1()
 
 }
 
-void player_diea2()
+void player_diea2(void)
 {
 	self->s.v.frame = 51;
 	self->think = (func_t) player_diea3;
@@ -1454,7 +1454,7 @@ void player_diea2()
 
 }
 
-void player_diea3()
+void player_diea3(void)
 {
 	self->s.v.frame = 52;
 	self->think = (func_t) player_diea4;
@@ -1462,7 +1462,7 @@ void player_diea3()
 
 }
 
-void player_diea4()
+void player_diea4(void)
 {
 	self->s.v.frame = 53;
 	self->think = (func_t) player_diea5;
@@ -1470,7 +1470,7 @@ void player_diea4()
 
 }
 
-void player_diea5()
+void player_diea5(void)
 {
 	self->s.v.frame = 54;
 	self->think = (func_t) player_diea6;
@@ -1478,7 +1478,7 @@ void player_diea5()
 
 }
 
-void player_diea6()
+void player_diea6(void)
 {
 	self->s.v.frame = 55;
 	self->think = (func_t) player_diea7;
@@ -1486,7 +1486,7 @@ void player_diea6()
 
 }
 
-void player_diea7()
+void player_diea7(void)
 {
 	self->s.v.frame = 56;
 	self->think = (func_t) player_diea8;
@@ -1494,7 +1494,7 @@ void player_diea7()
 
 }
 
-void player_diea8()
+void player_diea8(void)
 {
 	self->s.v.frame = 57;
 	self->think = (func_t) player_diea9;
@@ -1502,7 +1502,7 @@ void player_diea8()
 
 }
 
-void player_diea9()
+void player_diea9(void)
 {
 	self->s.v.frame = 58;
 	self->think = (func_t) player_diea10;
@@ -1510,7 +1510,7 @@ void player_diea9()
 
 }
 
-void player_diea10()
+void player_diea10(void)
 {
 	self->s.v.frame = 59;
 	self->think = (func_t) player_diea11;
@@ -1518,7 +1518,7 @@ void player_diea10()
 
 }
 
-void player_diea11()
+void player_diea11(void)
 {
 	self->s.v.frame = 60;
 	self->think = (func_t) player_diea11;
@@ -1527,7 +1527,7 @@ void player_diea11()
 	PlayerDead();
 }
 
-void player_dieb1()
+void player_dieb1(void)
 {
 	self->s.v.frame = 61;
 	self->think = (func_t) player_dieb2;
@@ -1535,7 +1535,7 @@ void player_dieb1()
 
 }
 
-void player_dieb2()
+void player_dieb2(void)
 {
 	self->s.v.frame = 62;
 	self->think = (func_t) player_dieb3;
@@ -1543,7 +1543,7 @@ void player_dieb2()
 
 }
 
-void player_dieb3()
+void player_dieb3(void)
 {
 	self->s.v.frame = 63;
 	self->think = (func_t) player_dieb4;
@@ -1551,7 +1551,7 @@ void player_dieb3()
 
 }
 
-void player_dieb4()
+void player_dieb4(void)
 {
 	self->s.v.frame = 64;
 	self->think = (func_t) player_dieb5;
@@ -1559,7 +1559,7 @@ void player_dieb4()
 
 }
 
-void player_dieb5()
+void player_dieb5(void)
 {
 	self->s.v.frame = 65;
 	self->think = (func_t) player_dieb6;
@@ -1567,7 +1567,7 @@ void player_dieb5()
 
 }
 
-void player_dieb6()
+void player_dieb6(void)
 {
 	self->s.v.frame = 66;
 	self->think = (func_t) player_dieb7;
@@ -1575,7 +1575,7 @@ void player_dieb6()
 
 }
 
-void player_dieb7()
+void player_dieb7(void)
 {
 	self->s.v.frame = 67;
 	self->think = (func_t) player_dieb8;
@@ -1583,7 +1583,7 @@ void player_dieb7()
 
 }
 
-void player_dieb8()
+void player_dieb8(void)
 {
 	self->s.v.frame = 68;
 	self->think = (func_t) player_dieb9;
@@ -1591,7 +1591,7 @@ void player_dieb8()
 
 }
 
-void player_dieb9()
+void player_dieb9(void)
 {
 	self->s.v.frame = 69;
 	self->think = (func_t) player_dieb9;
@@ -1600,7 +1600,7 @@ void player_dieb9()
 	PlayerDead();
 }
 
-void player_diec1()
+void player_diec1(void)
 {
 	self->s.v.frame = 70;
 	self->think = (func_t) player_diec2;
@@ -1608,7 +1608,7 @@ void player_diec1()
 
 }
 
-void player_diec2()
+void player_diec2(void)
 {
 	self->s.v.frame = 71;
 	self->think = (func_t) player_diec3;
@@ -1616,7 +1616,7 @@ void player_diec2()
 
 }
 
-void player_diec3()
+void player_diec3(void)
 {
 	self->s.v.frame = 72;
 	self->think = (func_t) player_diec4;
@@ -1624,7 +1624,7 @@ void player_diec3()
 
 }
 
-void player_diec4()
+void player_diec4(void)
 {
 	self->s.v.frame = 73;
 	self->think = (func_t) player_diec5;
@@ -1632,7 +1632,7 @@ void player_diec4()
 
 }
 
-void player_diec5()
+void player_diec5(void)
 {
 	self->s.v.frame = 74;
 	self->think = (func_t) player_diec6;
@@ -1640,7 +1640,7 @@ void player_diec5()
 
 }
 
-void player_diec6()
+void player_diec6(void)
 {
 	self->s.v.frame = 75;
 	self->think = (func_t) player_diec7;
@@ -1648,7 +1648,7 @@ void player_diec6()
 
 }
 
-void player_diec7()
+void player_diec7(void)
 {
 	self->s.v.frame = 76;
 	self->think = (func_t) player_diec8;
@@ -1656,7 +1656,7 @@ void player_diec7()
 
 }
 
-void player_diec8()
+void player_diec8(void)
 {
 	self->s.v.frame = 77;
 	self->think = (func_t) player_diec9;
@@ -1664,7 +1664,7 @@ void player_diec8()
 
 }
 
-void player_diec9()
+void player_diec9(void)
 {
 	self->s.v.frame = 78;
 	self->think = (func_t) player_diec10;
@@ -1672,7 +1672,7 @@ void player_diec9()
 
 }
 
-void player_diec10()
+void player_diec10(void)
 {
 	self->s.v.frame = 79;
 	self->think = (func_t) player_diec11;
@@ -1680,7 +1680,7 @@ void player_diec10()
 
 }
 
-void player_diec11()
+void player_diec11(void)
 {
 	self->s.v.frame = 80;
 	self->think = (func_t) player_diec12;
@@ -1688,7 +1688,7 @@ void player_diec11()
 
 }
 
-void player_diec12()
+void player_diec12(void)
 {
 	self->s.v.frame = 81;
 	self->think = (func_t) player_diec13;
@@ -1696,7 +1696,7 @@ void player_diec12()
 
 }
 
-void player_diec13()
+void player_diec13(void)
 {
 	self->s.v.frame = 82;
 	self->think = (func_t) player_diec14;
@@ -1704,7 +1704,7 @@ void player_diec13()
 
 }
 
-void player_diec14()
+void player_diec14(void)
 {
 	self->s.v.frame = 83;
 	self->think = (func_t) player_diec15;
@@ -1712,7 +1712,7 @@ void player_diec14()
 
 }
 
-void player_diec15()
+void player_diec15(void)
 {
 	self->s.v.frame = 84;
 	self->think = (func_t) player_diec15;
@@ -1721,7 +1721,7 @@ void player_diec15()
 	PlayerDead();
 }
 
-void player_died1()
+void player_died1(void)
 {
 	self->s.v.frame = 85;
 	self->think = (func_t) player_died2;
@@ -1729,7 +1729,7 @@ void player_died1()
 
 }
 
-void player_died2()
+void player_died2(void)
 {
 	self->s.v.frame = 86;
 	self->think = (func_t) player_died3;
@@ -1737,7 +1737,7 @@ void player_died2()
 
 }
 
-void player_died3()
+void player_died3(void)
 {
 	self->s.v.frame = 87;
 	self->think = (func_t) player_died4;
@@ -1745,7 +1745,7 @@ void player_died3()
 
 }
 
-void player_died4()
+void player_died4(void)
 {
 	self->s.v.frame = 88;
 	self->think = (func_t) player_died5;
@@ -1753,7 +1753,7 @@ void player_died4()
 
 }
 
-void player_died5()
+void player_died5(void)
 {
 	self->s.v.frame = 89;
 	self->think = (func_t) player_died6;
@@ -1761,7 +1761,7 @@ void player_died5()
 
 }
 
-void player_died6()
+void player_died6(void)
 {
 	self->s.v.frame = 90;
 	self->think = (func_t) player_died7;
@@ -1769,7 +1769,7 @@ void player_died6()
 
 }
 
-void player_died7()
+void player_died7(void)
 {
 	self->s.v.frame = 91;
 	self->think = (func_t) player_died8;
@@ -1777,7 +1777,7 @@ void player_died7()
 
 }
 
-void player_died8()
+void player_died8(void)
 {
 	self->s.v.frame = 92;
 	self->think = (func_t) player_died9;
@@ -1785,7 +1785,7 @@ void player_died8()
 
 }
 
-void player_died9()
+void player_died9(void)
 {
 	self->s.v.frame = 93;
 	self->think = (func_t) player_died9;
@@ -1794,7 +1794,7 @@ void player_died9()
 	PlayerDead();
 }
 
-void player_diee1()
+void player_diee1(void)
 {
 	self->s.v.frame = 94;
 	self->think = (func_t) player_diee2;
@@ -1802,7 +1802,7 @@ void player_diee1()
 
 }
 
-void player_diee2()
+void player_diee2(void)
 {
 	self->s.v.frame = 95;
 	self->think = (func_t) player_diee3;
@@ -1810,7 +1810,7 @@ void player_diee2()
 
 }
 
-void player_diee3()
+void player_diee3(void)
 {
 	self->s.v.frame = 96;
 	self->think = (func_t) player_diee4;
@@ -1818,42 +1818,42 @@ void player_diee3()
 
 }
 
-void player_diee4()
+void player_diee4(void)
 {
 	self->s.v.frame = 97;
 	self->think = (func_t) player_diee5;
 	self->s.v.nextthink = g_globalvars.time + 0.1;
 }
 
-void player_diee5()
+void player_diee5(void)
 {
 	self->s.v.frame = 98;
 	self->think = (func_t) player_diee6;
 	self->s.v.nextthink = g_globalvars.time + 0.1;
 }
 
-void player_diee6()
+void player_diee6(void)
 {
 	self->s.v.frame = 99;
 	self->think = (func_t) player_diee7;
 	self->s.v.nextthink = g_globalvars.time + 0.1;
 }
 
-void player_diee7()
+void player_diee7(void)
 {
 	self->s.v.frame = 100;
 	self->think = (func_t) player_diee8;
 	self->s.v.nextthink = g_globalvars.time + 0.1;
 }
 
-void player_diee8()
+void player_diee8(void)
 {
 	self->s.v.frame = 101;
 	self->think = (func_t) player_diee9;
 	self->s.v.nextthink = g_globalvars.time + 0.1;
 }
 
-void player_diee9()
+void player_diee9(void)
 {
 	self->s.v.frame = 102;
 	self->think = (func_t) player_diee9;
@@ -1861,63 +1861,63 @@ void player_diee9()
 	PlayerDead();
 }
 
-void player_die_ax1()
+void player_die_ax1(void)
 {
 	self->s.v.frame = 41;
 	self->think = (func_t) player_die_ax2;
 	self->s.v.nextthink = g_globalvars.time + 0.1;
 }
 
-void player_die_ax2()
+void player_die_ax2(void)
 {
 	self->s.v.frame = 42;
 	self->think = (func_t) player_die_ax3;
 	self->s.v.nextthink = g_globalvars.time + 0.1;
 }
 
-void player_die_ax3()
+void player_die_ax3(void)
 {
 	self->s.v.frame = 43;
 	self->think = (func_t) player_die_ax4;
 	self->s.v.nextthink = g_globalvars.time + 0.1;
 }
 
-void player_die_ax4()
+void player_die_ax4(void)
 {
 	self->s.v.frame = 44;
 	self->think = (func_t) player_die_ax5;
 	self->s.v.nextthink = g_globalvars.time + 0.1;
 }
 
-void player_die_ax5()
+void player_die_ax5(void)
 {
 	self->s.v.frame = 45;
 	self->think = (func_t) player_die_ax6;
 	self->s.v.nextthink = g_globalvars.time + 0.1;
 }
 
-void player_die_ax6()
+void player_die_ax6(void)
 {
 	self->s.v.frame = 46;
 	self->think = (func_t) player_die_ax7;
 	self->s.v.nextthink = g_globalvars.time + 0.1;
 }
 
-void player_die_ax7()
+void player_die_ax7(void)
 {
 	self->s.v.frame = 47;
 	self->think = (func_t) player_die_ax8;
 	self->s.v.nextthink = g_globalvars.time + 0.1;
 }
 
-void player_die_ax8()
+void player_die_ax8(void)
 {
 	self->s.v.frame = 48;
 	self->think = (func_t) player_die_ax9;
 	self->s.v.nextthink = g_globalvars.time + 0.1;
 }
 
-void player_die_ax9()
+void player_die_ax9(void)
 {
 	self->s.v.frame = 49;
 	self->think = (func_t) player_die_ax9;

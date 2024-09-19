@@ -3,6 +3,10 @@ cmake_minimum_required(VERSION 3.9.0)
 # Set project name and languge.
 project(qwprogs C)
 
+include(CheckCCompilerFlag)
+
+set(CMAKE_COLOR_DIAGNOSTICS ON)
+
 # CMake option for bot support, we check it below and add C preprocessor directive if required.
 option(BOT_SUPPORT "Build with bot support" ON)
 # Option for FTE extensions. We also have some basic support for FTE which does not controlled by this setting.
@@ -150,9 +154,24 @@ if(FTESV)
 endif()
 # If not Miscrosoft compilator - then set additional options for linker.
 if (CMAKE_C_COMPILER_ID STREQUAL "MSVC")
-	target_compile_options(${PROJECT_NAME} PRIVATE /W4)
+	# 4100 - unused parameter
+	# 4210 - using extern keyword in functions
+	# 4456 - shadowing locals, broadly used
+	# 4459 - shadowing globals, broadly used
+	target_compile_options(${PROJECT_NAME} PRIVATE /W4 /wd4100 /wd4210 /wd4456 /wd4459)
 else()
 	target_compile_options(${PROJECT_NAME} PRIVATE -Wall)
+
+	check_c_compiler_flag("-Wstrict-prototypes" HAS_CFLAG_STRICT_PROTOTYPES)
+	if (HAS_CFLAG_STRICT_PROTOTYPES)
+		target_compile_options(${PROJECT_NAME} PRIVATE -Werror=strict-prototypes)
+	endif()
+
+	check_c_compiler_flag("-Wstrlcpy-strlcat-size" HAS_STRLCPY_STRLCAT_SIZE)
+	if (HAS_STRLCPY_STRLCAT_SIZE)
+		target_compile_options(${PROJECT_NAME} PRIVATE -Werror=strlcpy-strlcat-size)
+	endif()
+
 	# Do not allow undefined symbols while linking.
 	if(APPLE)
 		target_link_options(${PROJECT_NAME} PRIVATE "-Wl,-undefined,error")
