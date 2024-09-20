@@ -1813,7 +1813,7 @@ void check_fcheck(void);
 void CheckTeamStatus(void);
 void SendSpecInfo(void);
 void DoMVDAutoTrack(void);
-void antilag_updateworld();
+void antilag_updateworld(void);
 
 void FixNoSpecs(void);
 

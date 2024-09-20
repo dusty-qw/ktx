@@ -45,7 +45,7 @@ float Physics_PushEntity(float push_x, float push_y, float push_z, int failonsta
 		if (self->s.v.solid >= SOLID_TRIGGER && (!((int)self->s.v.flags & FL_ONGROUND) || (self->s.v.groundentity != g_globalvars.trace_ent)))
 		{
 			other = PROG_TO_EDICT(g_globalvars.trace_ent);
-			((void(*)())(self->touch))();
+			((void(*)(void))(self->touch))();
 		}
 	}
 
@@ -229,7 +229,7 @@ void antilag_delete_world(gedict_t *e)
 		data->next->prev = data->prev;
 }
 
-void antilag_updateworld()
+void antilag_updateworld(void)
 {
 	if (g_globalvars.time < antilag_nextthink_world)
 		return;
@@ -607,7 +607,7 @@ void antilag_lagmove_all_proj(gedict_t *owner, gedict_t *e)
 			other = PROG_TO_EDICT(g_globalvars.trace_ent);
 			self = e;
 			self->s.v.flags = ((int)self->s.v.flags) | FL_GODMODE;
-			((void(*)())(self->touch))();
+			((void(*)(void))(self->touch))();
 
 			self = oself;
 			antilag_unmove_all(); // emergency antilag cleanup
@@ -639,7 +639,7 @@ void antilag_lagmove_all_proj(gedict_t *owner, gedict_t *e)
 			other = PROG_TO_EDICT(g_globalvars.trace_ent);
 			self = e;
 			self->s.v.flags = ((int)self->s.v.flags) | FL_GODMODE;
-			((void(*)())(self->touch))();
+			((void(*)(void))(self->touch))();
 			break;
 			//}
 		}

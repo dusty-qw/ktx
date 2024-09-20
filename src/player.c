@@ -137,7 +137,7 @@ void muzzleflash(void)
 	trap_multicast(PASSVEC3(self->s.v.origin), MULTICAST_PVS);
 }
 
-void player_dummyanim()
+void player_dummyanim(void)
 {
 
 }

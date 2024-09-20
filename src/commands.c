@@ -217,6 +217,8 @@ void ToggleNewCoopNm(void);
 void ToggleVwep(void);
 void TogglePause(void);
 void ToggleArena(void);
+void ToggleToT(void);
+void ToggleDropMessage(void);
 
 void Spawn666Time(void);
 
@@ -2779,7 +2781,7 @@ void ToggleDischarge(void)
 	cvar_toggle_msg(self, "k_dis", redtext("discharges"));
 }
 
-void ToggleDropMessage()
+void ToggleDropMessage(void)
 {
 	if (match_in_progress)
 	{

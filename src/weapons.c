@@ -484,7 +484,7 @@ void FireInstaBullet(vec3_t dir, deathType_t deathtype)
 	int depth, solid;
 	float fraction;
 	gedict_t *ignore;
-	qbool do_antilag = (self->ct == ctPlayer); // hacky check
+	//qbool do_antilag = (self->ct == ctPlayer); // hacky check
 
 	if (cvar("k_cg_kb"))
 	{
@@ -1006,7 +1006,7 @@ void T_InstaKickback(void)
 	ent_remove(self);
 }
 
-void T_MissileExplode_Antilag()
+void T_MissileExplode_Antilag(void)
 {
 	gedict_t *own = PROG_TO_EDICT(self->s.v.owner);
 

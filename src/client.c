@@ -1606,7 +1606,7 @@ qbool WeaponPrediction_SendEntity(gedict_t *to, int sendflags)
 }
 
 
-void WeaponPrediction_MarkSendFlags()
+void WeaponPrediction_MarkSendFlags(void)
 {
 	gedict_t *wep = self->weapon_pred;
 	int sendflags = 64;
@@ -1660,7 +1660,7 @@ void WeaponPrediction_MarkSendFlags()
 }
 
 
-void WeaponPrediction_Cleanup()
+void WeaponPrediction_Cleanup(void)
 {
 	if (self->weapon_pred != NULL)
 	{
@@ -1670,7 +1670,7 @@ void WeaponPrediction_Cleanup()
 }
 
 
-void WeaponPrediction_CreateEnt()
+void WeaponPrediction_CreateEnt(void)
 {
 	gedict_t *wep_values = spawn();
 	wep_values->s.v.owner = EDICT_TO_PROG(self);
@@ -4505,7 +4505,7 @@ void PlayerPostThink(void)
 
 		self->client_time = self->client_nextthink;
 		self->client_nextthink = 0;
-		((void(*)())(self->client_think))();
+		((void(*)(void))(self->client_think))();
 
 		self->client_time = held_client_time;
 	}
