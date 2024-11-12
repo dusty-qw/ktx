@@ -107,8 +107,9 @@ equ		trap_movetogoal -93
 
 equ		trap_VisibleTo -94
 
-equ		trap_SetExtField       -257
-equ		trap_GetExtField       -258
+equ		trap_SetExtField       -256
+equ		trap_GetExtField       -257
+equ		trap_SetSendNeeded     -258
 equ		trap_changelevelHub    -259
 equ		trap_URI_Query         -260
 equ		trap_particleeffectnum -261

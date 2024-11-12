@@ -441,8 +441,12 @@ intptr_t VISIBILITY_VISIBLE vmMain(
 
 			self = PROG_TO_EDICT(g_globalvars.self);
 
+			// if (self->SendEntity)
+			// 	return ((int(*)(edict_t*, int))(self->SendEntity))(PROG_TO_EDICT(arg0), arg1);
+
 			if (self->SendEntity)
-				return ((int(*)(edict_t*, int))(self->SendEntity))(PROG_TO_EDICT(arg0), arg1);
+    			return ((int(*)(edict_t*, int))(self->SendEntity))((edict_t*)PROG_TO_EDICT(arg0), arg1);
+
 
 			return 0;
 	}

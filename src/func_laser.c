@@ -57,7 +57,7 @@ static void func_laser_use(void)
 		setorigin(self, 0, 0, 9000);
 		self->s.v.spawnflags = self->s.v.spawnflags + START_OFF;
 	}
-};
+}
 
 /**
  * QUAKED func_laser (0 .5 .8) ? START_OFF LASER_SOLID X X X X X X NOT_ON_EASY NOT_ON_NORMAL NOT_ON_HARD_OR_NIGHTMARE NOT_IN_DEATHMATCH NOT_IN_COOP NOT_IN_SINGLEPLAYER X NOT_ON_HARD_ONLY NOT_ON_NIGHTMARE_ONLY

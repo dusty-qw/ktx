@@ -1274,10 +1274,11 @@ void vote_check_antilag(void)
 
 	if (veto || !get_votes_req(OV_ANTILAG, true))
 	{
+		int new_antilag_value;
+
 		vote_clear(OV_ANTILAG);
 
 		// toggle antilag mode.
-		int new_antilag_value;
 		new_antilag_value = cvar("sv_antilag") + 1;
 		if (new_antilag_value > 2)
 			new_antilag_value = 0;
@@ -1301,7 +1302,7 @@ void vote_check_antilag(void)
 
 void antilag(void)
 {
-	int votes;
+	int votes, antilag_new_value;
 
 	if (match_in_progress)
 	{
@@ -1324,11 +1325,9 @@ void antilag(void)
 
 	self->v.antilag = !self->v.antilag;
 
-	int antilag_new_value;
 	antilag_new_value = cvar("sv_antilag") + 1;
 	if (antilag_new_value > 2)
 		antilag_new_value = 0;
-
 
 	G_bprint(
 			2,

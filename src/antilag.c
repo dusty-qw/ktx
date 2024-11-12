@@ -21,8 +21,12 @@ float time_corrected;
 
 void Physics_PushEntityTrace(float push_x, float push_y, float push_z)
 {
-	vec3_t push = { push_x, push_y, push_z };
+	vec3_t push;
 	vec3_t end;
+
+	push[0] = push_x;
+	push[1] = push_y;
+	push[2] = push_z;
 
 	VectorAdd(self->s.v.origin, push, end);
 
@@ -31,7 +35,11 @@ void Physics_PushEntityTrace(float push_x, float push_y, float push_z)
 
 float Physics_PushEntity(float push_x, float push_y, float push_z, int failonstartsolid) // SV_PushEntity
 {
-	vec3_t push = { push_x, push_y, push_z };
+	vec3_t push;
+
+	push[0] = push_x;
+	push[1] = push_y;
+	push[2] = push_z;
 
 	Physics_PushEntityTrace(PASSVEC3(push));
 
@@ -55,10 +63,19 @@ float Physics_PushEntity(float push_x, float push_y, float push_z, int failonsta
 #define MAX_CLIP_PLANES 5
 void Physics_ClipVelocity(float vel_x, float vel_y, float vel_z, float norm_x, float norm_y, float norm_z, float f) // SV_ClipVelocity
 {
-	vec3_t vel = { vel_x, vel_y, vel_z };
-	vec3_t norm = { norm_x, norm_y, norm_z };
-
+	vec3_t vel;
+	vec3_t norm;
 	vec3_t vel2;
+
+	vel[0] = vel_x;
+	vel[1] = vel_y;
+	vel[2] = vel_z;
+
+	norm[0] = norm_x;
+	norm[1] = norm_y;
+	norm[2] = norm_z;
+
+	
 	VectorScale(norm, DotProduct(vel, norm), vel2);
 	VectorScale(vel2, f, vel2);
 	VectorSubtract(vel, vel2, vel);
@@ -73,6 +90,8 @@ void Physics_ClipVelocity(float vel_x, float vel_y, float vel_z, float norm_x, f
 void Physics_Bounce(float dt)
 {
 	float gravity_value = cvar("sv_gravity");
+	float movetime;
+	float bump;
 
 	if ((int)self->s.v.flags & FL_ONGROUND)
 	{
@@ -90,23 +109,21 @@ void Physics_Bounce(float dt)
 
 	VectorMA(self->s.v.angles, dt, self->s.v.avelocity, self->s.v.angles);
 
-	float movetime, bump;
 	movetime = dt;
+
 	for (bump = 0; bump < MAX_CLIP_PLANES && movetime > 0; ++bump)
 	{
 		vec3_t move;
+		float d, bouncefac = 0.5, bouncestp = 60 / 100;
+
 		VectorScale(self->s.v.velocity, movetime, move);
 		Physics_PushEntity(PASSVEC3(move), false);
 
 		if (g_globalvars.trace_fraction == 1 && !g_globalvars.trace_startsolid)
 			break;
 
-		movetime *= 1 - min(1, g_globalvars.trace_fraction);
+		movetime *= 1 - ((g_globalvars.trace_fraction < 1) ? g_globalvars.trace_fraction : 1);
 
-		float d, bouncefac, bouncestp;
-
-		bouncefac = 0.5;
-		bouncestp = 60 / 800;
 		if (self->gravity)
 			bouncestp *= self->gravity * gravity_value;
 		else
@@ -124,7 +141,9 @@ void Physics_Bounce(float dt)
 			VectorClear(self->s.v.avelocity);
 		}
 		else
+		{
 			self->s.v.flags = (int)self->s.v.flags &~ FL_ONGROUND;
+		}
 	}
 
 	if (!((int)self->s.v.flags & FL_ONGROUND))
@@ -231,12 +250,13 @@ void antilag_delete_world(gedict_t *e)
 
 void antilag_updateworld(void)
 {
+	antilag_t *list;
+	
 	if (g_globalvars.time < antilag_nextthink_world)
 		return;
 
 	antilag_nextthink_world = g_globalvars.time + cvar("sv_mintic");
 	
-	antilag_t *list;
 	for (list = antilag_list_world; list != NULL; list = list->next)
 	{
 		antilag_log(list->owner, list);
@@ -245,13 +265,14 @@ void antilag_updateworld(void)
 
 void antilag_lagmove(antilag_t *data, float goal_time)
 {
+	float seek_time, under_time, over_time, frac;
+	int seek, old_seek, no_xerp = true;
 	gedict_t *owner = data->owner;
-	vec3_t lerp_origin;
+	vec3_t lerp_origin, diff;
 
 	//don't rewind past spawns
 	goal_time = max(goal_time, data->owner->spawn_time);
 	
-	int no_xerp = true;
 	if (data->owner->client_lastupdated > 0)
 	{
 		if (goal_time > data->owner->client_lastupdated)
@@ -260,12 +281,13 @@ void antilag_lagmove(antilag_t *data, float goal_time)
 
 	if (no_xerp) // this should be true unless client is stuttering a lot
 	{
-		int old_seek = data->rewind_seek;
-		int seek = data->rewind_seek - 1;
+		old_seek = data->rewind_seek;
+		seek = data->rewind_seek - 1;
+
 		if (seek < 0)
 			seek = ANTILAG_MAXSTATES - 1;
 
-		float seek_time = data->rewind_time[seek];
+		seek_time = data->rewind_time[seek];
 		while (seek != data->rewind_seek && seek_time > goal_time)
 		{
 			old_seek = seek;
@@ -275,13 +297,12 @@ void antilag_lagmove(antilag_t *data, float goal_time)
 			seek_time = data->rewind_time[seek];
 		}
 
-		float under_time = data->rewind_time[old_seek];
-		float over_time = data->rewind_time[seek];
-		float frac = (goal_time - over_time) / (under_time - over_time);
+		under_time = data->rewind_time[old_seek];
+		over_time = data->rewind_time[seek];
+		frac = (goal_time - over_time) / (under_time - over_time);
 
 		if (frac <= 1)
 		{
-			vec3_t diff;
 			VectorSubtract(data->rewind_origin[old_seek], data->rewind_origin[seek], diff);
 
 			if (VectorLength(diff) > 48) // whoops, maybe we teleported?
@@ -292,10 +313,9 @@ void antilag_lagmove(antilag_t *data, float goal_time)
 		}
 		else
 		{
-			float frac = (goal_time - over_time) / (g_globalvars.time - over_time);
+			frac = (goal_time - over_time) / (g_globalvars.time - over_time);
 			frac = min(frac, 1);
 
-			vec3_t diff;
 			VectorSubtract(owner->s.v.origin, data->rewind_origin[data->rewind_seek], diff);
 
 			if (VectorLength(diff) > 48) // whoops, maybe we teleported?
@@ -318,10 +338,14 @@ void antilag_getorigin(antilag_t *data, float goal_time)
 {
 	int old_seek = data->rewind_seek;
 	int seek = data->rewind_seek - 1;
+	float seek_time, under_time, over_time, frac;
+	gedict_t *owner;
+	vec3_t lerp_origin, diff;
+
 	if (seek < 0)
 		seek = ANTILAG_MAXSTATES - 1;
 
-	float seek_time = data->rewind_time[seek];
+	seek_time = data->rewind_time[seek];
 	while (seek != data->rewind_seek && seek_time > goal_time)
 	{
 		old_seek = seek;
@@ -331,24 +355,20 @@ void antilag_getorigin(antilag_t *data, float goal_time)
 		seek_time = data->rewind_time[seek];
 	}
 
-	float under_time = data->rewind_time[old_seek];
-	float over_time = data->rewind_time[seek];
-	float frac = (goal_time - over_time) / (under_time - over_time);
+	under_time = data->rewind_time[old_seek];
+	over_time = data->rewind_time[seek];
+	frac = (goal_time - over_time) / (under_time - over_time);
+	owner = data->owner;
 
-	gedict_t *owner = data->owner;
-
-	vec3_t lerp_origin;
 	if (frac <= 1)
 	{
-		vec3_t diff;
 		VectorSubtract(data->rewind_origin[old_seek], data->rewind_origin[seek], diff);
 		VectorScale(diff, frac, diff);
 		VectorAdd(data->rewind_origin[seek], diff, lerp_origin);
 	}
 	else
 	{
-		float frac = (goal_time - over_time) / (g_globalvars.time - over_time);
-		vec3_t diff;
+		frac = (goal_time - over_time) / (g_globalvars.time - over_time);
 		VectorSubtract(owner->s.v.origin, data->rewind_origin[data->rewind_seek], diff);
 		VectorScale(diff, frac, diff);
 		VectorAdd(data->rewind_origin[data->rewind_seek], diff, lerp_origin);
@@ -360,13 +380,13 @@ void antilag_getorigin(antilag_t *data, float goal_time)
 
 int antilag_getseek(antilag_t *data, float ms)
 {
-	float goal_time = g_globalvars.time - ms;
-
+	float seek_time, goal_time = g_globalvars.time - ms;
 	int seek = data->rewind_seek - 1;
+
 	if (seek < 0)
 		seek = ANTILAG_MAXSTATES - 1;
 
-	float seek_time = data->rewind_time[seek];
+	seek_time = data->rewind_time[seek];
 	while (seek != data->rewind_seek && seek_time > goal_time)
 	{
 		seek--;
@@ -381,9 +401,13 @@ int antilag_getseek(antilag_t *data, float ms)
 void antilag_lagmove_all(gedict_t *e, float ms)
 {
 	float rewind_time = g_globalvars.time - ms;
+	int lag_platform;
+	gedict_t *plat;
+	antilag_t *list;
+	vec3_t diff, org;
+
 	time_corrected = rewind_time;
 
-	antilag_t *list;
 	for (list = antilag_list_players; list != NULL; list = list->next)
 	{
 		if (list->owner->s.v.health <= 0)
@@ -394,18 +418,16 @@ void antilag_lagmove_all(gedict_t *e, float ms)
 
 		if (list->owner == e)
 		{
-			int lag_platform = list->rewind_platform_edict[antilag_getseek(list, ms)];
+			lag_platform = list->rewind_platform_edict[antilag_getseek(list, ms)];
 			if (lag_platform)
 			{
-				gedict_t *plat = PROG_TO_EDICT(lag_platform);
+				plat = PROG_TO_EDICT(lag_platform);
 				if (plat->antilag_data != NULL)
 				{
-					vec3_t diff;
 					VectorClear(diff);
 					antilag_getorigin(plat->antilag_data, rewind_time);
 					VectorSubtract(antilag_origin, plat->s.v.origin, diff);
 
-					vec3_t org;
 					VectorAdd(e->s.v.origin, diff, org);
 
 					trap_setorigin(NUM_FOR_EDICT(e), PASSVEC3(org));
@@ -428,9 +450,10 @@ void antilag_lagmove_all(gedict_t *e, float ms)
 void antilag_lagmove_all_playeronly(gedict_t *e, float ms)
 {
 	float rewind_time = g_globalvars.time - ms;
+	antilag_t *list;
+
 	time_corrected = rewind_time;
 
-	antilag_t *list;
 	for (list = antilag_list_players; list != NULL; list = list->next)
 	{
 		if (list->owner->s.v.health <= 0)
@@ -446,9 +469,13 @@ void antilag_lagmove_all_playeronly(gedict_t *e, float ms)
 void antilag_lagmove_all_nohold(gedict_t *e, float ms, int plat_rewind)
 {
 	float rewind_time = g_globalvars.time - ms;
+	int lag_platform;
+	antilag_t *list;
+	gedict_t *plat;
+	vec3_t diff, org;
+
 	time_corrected = rewind_time;
 
-	antilag_t *list;
 	for (list = antilag_list_players; list != NULL; list = list->next)
 	{
 		if (list->owner->s.v.health <= 0)
@@ -458,18 +485,16 @@ void antilag_lagmove_all_nohold(gedict_t *e, float ms, int plat_rewind)
 		{
 			if (plat_rewind)
 			{
-				int lag_platform = list->rewind_platform_edict[antilag_getseek(list, ms)];
+				lag_platform = list->rewind_platform_edict[antilag_getseek(list, ms)];
 				if (lag_platform)
 				{
-					gedict_t *plat = PROG_TO_EDICT(lag_platform);
+					plat = PROG_TO_EDICT(lag_platform);
 					if (plat->antilag_data != NULL)
 					{
-						vec3_t diff;
 						VectorClear(diff);
 						antilag_getorigin(plat->antilag_data, rewind_time);
 						VectorSubtract(antilag_origin, plat->s.v.origin, diff);
 
-						vec3_t org;
 						VectorAdd(e->s.v.origin, diff, org);
 
 						trap_setorigin(NUM_FOR_EDICT(e), PASSVEC3(org));
@@ -501,12 +526,13 @@ void antilag_unmove_specific(gedict_t *ent)
 
 void antilag_unmove_all(void)
 {
+	antilag_t *list;
+
 	if (cvar("sv_antilag") != 1)
 		return;
 
 	time_corrected = g_globalvars.time;
 
-	antilag_t *list;
 	for (list = antilag_list_players; list != NULL; list = list->next)
 	{
 		if (list->owner->s.v.health <= 0)
@@ -523,10 +549,11 @@ void antilag_unmove_all(void)
 
 void antilag_lagmove_all_hitscan(gedict_t *e)
 {
+	float ms = (atof(ezinfokey(e, "ping")) / 1000);
+
 	if (cvar("sv_antilag") != 1)
 		return;
 
-	float ms = (atof(ezinfokey(e, "ping")) / 1000);
 	ms -= (ms < ANTILAG_MAX_PREDICTION ? (1 / 77.0) : ANTILAG_MAX_PREDICTION);
 
 	if (ms > ANTILAG_REWIND_MAXHITSCAN)
@@ -539,10 +566,15 @@ void antilag_lagmove_all_hitscan(gedict_t *e)
 
 void antilag_lagmove_all_proj(gedict_t *owner, gedict_t *e)
 {
+	float ms = (atof(ezinfokey(owner, "ping")) / 1000);
+	float step_time, current_time;
+	antilag_t *list;
+	vec3_t old_org;
+	gedict_t *oself;
+
 	if (cvar("sv_antilag") != 1)
 		return;
 
-	float ms = (atof(ezinfokey(owner, "ping")) / 1000);
 	ms -= (ms < ANTILAG_MAX_PREDICTION ? (1 / 77.0) : ANTILAG_MAX_PREDICTION);
 
 	if (ms > ANTILAG_REWIND_MAXPROJECTILE)
@@ -553,7 +585,7 @@ void antilag_lagmove_all_proj(gedict_t *owner, gedict_t *e)
 	e->client_time = ms;
 
 	// log hold stats, because we use nohold antilag moving
-	antilag_t *list;
+	
 	for (list = antilag_list_players; list != NULL; list = list->next)
 	{
 		if (list->owner->s.v.health <= 0)
@@ -570,7 +602,6 @@ void antilag_lagmove_all_proj(gedict_t *owner, gedict_t *e)
 	}
 
 	///*
-	vec3_t old_org;
 	VectorCopy(owner->s.v.origin, old_org);
 	antilag_lagmove_all_nohold(owner, ms, true);
 	VectorSubtract(owner->s.v.origin, old_org, old_org);
@@ -583,18 +614,16 @@ void antilag_lagmove_all_proj(gedict_t *owner, gedict_t *e)
 	VectorCopy(e->s.v.origin, e->oldangles); // store for later maybe
 	e->s.v.armorvalue = ms;
 
-	gedict_t *oself = self;
+	oself = self;
 
-	float step_time = min(cvar("sv_mintic"), ms);
+	step_time = min(cvar("sv_mintic"), ms);
 	if (step_time * VectorLength(e->s.v.velocity) > 3)
 	{
 		// step size * velocity can't be more than player hitbox width, we don't want any shenanigans
 		step_time = 8 / VectorLength(e->s.v.velocity);
 	}
 
-
-
-	float current_time = g_globalvars.time - ms;
+	current_time = g_globalvars.time - ms;
 	// newmis reimplementation
 	if (newmis == e)
 	{
@@ -615,7 +644,6 @@ void antilag_lagmove_all_proj(gedict_t *owner, gedict_t *e)
 		}
 	}
 	//
-
 
 	// actual stepping through
 	while (current_time <= g_globalvars.time)
@@ -658,10 +686,15 @@ void antilag_lagmove_all_proj(gedict_t *owner, gedict_t *e)
 
 void antilag_lagmove_all_proj_bounce(gedict_t *owner, gedict_t *e)
 {
+	float ms = (atof(ezinfokey(owner, "ping")) / 1000);
+	float step_time, current_time;
+	antilag_t *list;
+	vec3_t old_org;
+	gedict_t *oself;
+	
 	if (cvar("sv_antilag") != 1)
 		return;
 
-	float ms = (atof(ezinfokey(owner, "ping")) / 1000);
 	ms -= (ms < ANTILAG_MAX_PREDICTION ? (1 / 77.0) : ANTILAG_MAX_PREDICTION);
 
 	if (ms > ANTILAG_REWIND_MAXPROJECTILE)
@@ -672,7 +705,6 @@ void antilag_lagmove_all_proj_bounce(gedict_t *owner, gedict_t *e)
 	e->client_time = ms;
 
 	// log hold stats, because we use nohold antilag moving
-	antilag_t *list;
 	for (list = antilag_list_players; list != NULL; list = list->next)
 	{
 		if (list->owner->s.v.health <= 0)
@@ -689,7 +721,6 @@ void antilag_lagmove_all_proj_bounce(gedict_t *owner, gedict_t *e)
 	}
 
 	///*
-	vec3_t old_org;
 	VectorCopy(owner->s.v.origin, old_org);
 	antilag_lagmove_all_nohold(owner, ms, true);
 	VectorSubtract(owner->s.v.origin, old_org, old_org);
@@ -701,21 +732,17 @@ void antilag_lagmove_all_proj_bounce(gedict_t *owner, gedict_t *e)
 
 	e->s.v.armorvalue = ms;
 
-	gedict_t *oself = self;
+	oself = self;
 	self = e;
 
-	float step_time = min(cvar("sv_mintic"), ms);
+	step_time = min(cvar("sv_mintic"), ms);
 	if (step_time * VectorLength(e->s.v.velocity) > 32)
 	{
 		// step size * velocity can't be more than player hitbox width, we don't want any shenanigans
 		step_time = 32 / VectorLength(e->s.v.velocity);
 	}
 
-
-
-
-
-	float current_time = g_globalvars.time - ms;
+	current_time = g_globalvars.time - ms;
 	// newmis reimplementation
 	if (newmis == e)
 	{
@@ -723,7 +750,6 @@ void antilag_lagmove_all_proj_bounce(gedict_t *owner, gedict_t *e)
 		Physics_Bounce(0.05);
 	}
 	//
-
 
 	// actual step through
 	while (current_time < g_globalvars.time)
@@ -736,7 +762,6 @@ void antilag_lagmove_all_proj_bounce(gedict_t *owner, gedict_t *e)
 		current_time += step_time;
 	}
 	//
-
 
 	self = oself;
 

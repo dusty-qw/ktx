@@ -943,7 +943,7 @@ void SP_rotate_object(void)
 	setmodel(self, self->model);
 	setsize(self, PASSVEC3(self->s.v.mins), PASSVEC3(self->s.v.maxs));
 	self->think = (func_t) SUB_Null;
-};
+}
 
 //************************************************
 //

@@ -1009,20 +1009,22 @@ void T_InstaKickback(void)
 void T_MissileExplode_Antilag(void)
 {
 	gedict_t *own = PROG_TO_EDICT(self->s.v.owner);
+	gedict_t *trace_hit;
+	gedict_t *head;
+	vec3_t trav_off;
 
 	if ((int)self->s.v.flags & FL_GODMODE)
 	{
 		traceline(PASSVEC3(self->oldangles), PASSVEC3(self->s.v.origin), true, self);
 		trap_setorigin(NUM_FOR_EDICT(self), PASSVEC3(g_globalvars.trace_endpos));
 
-		gedict_t *trace_hit = self->oldenemy;
+		trace_hit = self->oldenemy;
 		if (trace_hit != NULL)
 		{
 			if (trace_hit->antilag_data != NULL && trace_hit->s.v.solid == SOLID_BSP)
 			{
 				// add platform travel velocity * delay to the rocket position
 				// this is a hack that could misbehave in certain circumstances
-				vec3_t trav_off;
 				VectorScale(trace_hit->s.v.velocity, self->gravity + 0.040, trav_off);
 				VectorAdd(self->s.v.origin, trav_off, trav_off);
 				trap_setorigin(NUM_FOR_EDICT(self), PASSVEC3(trav_off));
@@ -1031,7 +1033,6 @@ void T_MissileExplode_Antilag(void)
 	}
 
 	// this is awful, but it's the easiest way to exactly replicate the crappy findradius cropping of the splash radius
-	gedict_t *head;
 	head = trap_findradius(world, self->s.v.origin, 160);
 
 	while (head)
@@ -1109,18 +1110,20 @@ void T_MissileTouch(void)
 	///*
 	if (cvar("sv_antilag") == 1) // if this is an anti lag rocket, ignore our owner
 	{
+		float delay;
+		vec3_t diff, traveled;
+		gedict_t *local_explosion;
+		gedict_t *oself;
+		
 		T_RadiusDamage_Ignore2(self, PROG_TO_EDICT(self->s.v.owner), 120, other, PROG_TO_EDICT(self->s.v.owner), dtRL);
-		gedict_t *local_explosion = spawn();
+		local_explosion = spawn();
 
-		vec3_t diff;
 		VectorSubtract(self->s.v.origin, self->oldangles, diff);
 
 		trap_setorigin(NUM_FOR_EDICT(local_explosion), PASSVEC3(self->s.v.origin));
 		VectorCopy(self->oldangles, local_explosion->oldangles);
 		local_explosion->s.v.owner = self->s.v.owner;
 		local_explosion->oldenemy = other;
-
-		float delay;
 
 		if ((int)self->s.v.flags & FL_GODMODE)
 		{
@@ -1130,7 +1133,6 @@ void T_MissileTouch(void)
 		}
 		else
 		{
-			vec3_t traveled;
 			VectorScale(self->s.v.velocity, g_globalvars.time - self->rad_time, traveled);
 			VectorAdd(self->oldangles, traveled, self->oldangles);
 			VectorSubtract(self->s.v.origin, self->oldangles, diff);
@@ -1150,7 +1152,7 @@ void T_MissileTouch(void)
 		else
 		{
 			delay = 0;
-			gedict_t *oself = self;
+			oself = self;
 			self = local_explosion;
 			T_MissileExplode_Antilag();
 			self = oself;
@@ -1295,6 +1297,7 @@ void LightningHit(gedict_t *from, float damage)
  */
 void LightningDamage(vec3_t p1, vec3_t p2, gedict_t *from, float damage)
 {
+	gedict_t *gre;
 	qbool do_antilag = (from->ct == ctPlayer);  // hacky check
 	if (do_antilag)
 		antilag_lagmove_all_hitscan(from);
@@ -1316,7 +1319,7 @@ void LightningDamage(vec3_t p1, vec3_t p2, gedict_t *from, float damage)
 		// this code cause "dm6 secret door bug"
 		if (from->ct == ctPlayer)
 		{
-			gedict_t *gre = PROG_TO_EDICT(from->s.v.groundentity);
+			gre = PROG_TO_EDICT(from->s.v.groundentity);
 
 			if (gre && (gre == PROG_TO_EDICT(g_globalvars.trace_ent))
 					&& streq(gre->classname, "door"))
