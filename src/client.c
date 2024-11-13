@@ -53,7 +53,7 @@ void ImpulseCommands(void);
 void StartDie(void);
 void ZeroFpsStats(void);
 void item_megahealth_rot(void);
-
+void SendSpecInfo(gedict_t *spec, gedict_t *target_client);
 void del_from_specs_favourites(gedict_t *rm);
 void item_megahealth_rot(void);
 
@@ -1714,6 +1714,8 @@ void ClientConnect(void)
 		}
 	}
 
+	SendSpecInfo(NULL, self); // get all spectator info
+
 	MakeMOTD();
 
 #ifdef BOT_SUPPORT
@@ -2129,6 +2131,31 @@ void PutClientInServer(void)
 
 			// Red armor + LG
 			items = IT_LIGHTNING | IT_ARMOR3;
+		}
+		else if (tot_mode_enabled())
+		{
+			self->s.v.ammo_nails = 255;
+			self->s.v.ammo_shells = 255;
+			self->s.v.ammo_rockets = 255;
+			self->s.v.ammo_cells = 255;
+
+			self->s.v.armorvalue = self->isBot ? 0 : 200;
+			self->s.v.armortype = self->isBot ? 0 : 0.8;
+			self->s.v.health = self->isBot ? FrogbotHealth() : 250;
+
+			items = self->s.v.items;
+			items |= IT_NAILGUN;
+			items |= IT_SUPER_NAILGUN;
+			items |= IT_SUPER_SHOTGUN;
+			items |= IT_ROCKET_LAUNCHER;
+			items |= IT_GRENADE_LAUNCHER;
+
+			if (streq(mapname, "dm3") || streq(mapname, "dm4"))
+				items |= IT_LIGHTNING;
+
+			items &= ~( IT_ARMOR1 | IT_ARMOR2 | IT_ARMOR3);
+			if (!self->isBot)
+				items |= IT_ARMOR3;
 		}
 		else
 		{
@@ -3852,7 +3879,7 @@ void CheckPowerups(void)
 		{
 			if (self->super_time == 1)
 			{
-				if (deathmatch == 4)
+				if (deathmatch == 4 && !tot_mode_enabled())
 				{
 					G_sprint(self, PRINT_HIGH, "OctaPower is wearing off\n");
 				}
@@ -3878,7 +3905,7 @@ void CheckPowerups(void)
 			self->s.v.items -= IT_QUAD;
 			if (!k_practice) // #practice mode#
 			{
-				if (deathmatch == 4)
+				if (deathmatch == 4 && !tot_mode_enabled())
 				{
 					self->s.v.ammo_cells = 255;
 					self->s.v.armorvalue = 1;
@@ -4454,33 +4481,44 @@ void CheckTeamStatus(void)
 	}
 }
 
-void SendSpecInfo(void)
+void SendSpecInfo(gedict_t *spec, gedict_t *target_client)
 {
 	gedict_t *t, *p;
 	int cl, tr;
 
-	static double lastupdate = 0;
-
-	if (g_globalvars.time - lastupdate < 2)
+	if (spec)	// if spec has a value, we only want to send that spec's info
 	{
-		return;
-	}
-
-	lastupdate = g_globalvars.time;
-
-	for (t = world; (t = find_spc(t));)
-	{
-		cl = NUM_FOR_EDICT(t) - 1;
-		tr = NUM_FOR_EDICT(PROG_TO_EDICT(t->s.v.goalentity)) - 1;	// num for player spec is tracking
+		cl = NUM_FOR_EDICT(spec) - 1;
+		tr = NUM_FOR_EDICT(PROG_TO_EDICT(spec->s.v.goalentity)) - 1;	// num for player spec is tracking
 
 		for (p = world; (p = find_client(p));)
 		{
-			if (p == t)
-			{
+			if (p == spec)
 				continue; // ignore self
-			}
 
 			stuffcmd_flags(p, STUFFCMD_IGNOREINDEMO, "//spi %d %d\n", cl, tr);
+		}
+	}
+	else {
+		for (t = world; (t = find_spc(t));)
+		{
+			cl = NUM_FOR_EDICT(t) - 1;
+			tr = NUM_FOR_EDICT(PROG_TO_EDICT(t->s.v.goalentity)) - 1;	// num for player spec is tracking
+
+			if (target_client && target_client != t)
+			{
+				stuffcmd_flags(target_client, STUFFCMD_IGNOREINDEMO, "//spi %d %d\n", cl, tr);
+			}
+			else // if no target client is specified, send to everyone
+			{
+				for (p = world; (p = find_client(p));)
+				{
+					if (p == t)
+						continue; // ignore self
+
+					stuffcmd_flags(p, STUFFCMD_IGNOREINDEMO, "//spi %d %d\n", cl, tr);
+				}
+			}
 		}
 	}
 }

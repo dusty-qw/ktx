@@ -76,7 +76,7 @@
 
 #define MOD_NAME				("KTX")
 #define MOD_FULLNAME			("KTX: Kombat Teams eXtreme")
-#define MOD_VERSION				("1.44-dev")
+#define MOD_VERSION				("1.45-dev")
 #define MOD_BUILD_DATE			(__DATE__ ", " __TIME__)
 #define MOD_SERVERINFO_MOD_KEY	("ktxver")
 #define MOD_URL					("https://github.com/QW-Group/ktx")
@@ -1219,6 +1219,10 @@ void lgc_register_fire_stop(gedict_t *player);
 void lgc_register_kill(gedict_t *player);
 void lgc_register_miss(vec3_t start, gedict_t *player);
 void lgc_register_hit(vec3_t start, gedict_t *player, gedict_t *victim);
+
+#define TOT_MODE_VARIABLE "k_tot_mode"
+
+qbool tot_mode_enabled(void);
 
 // private games
 qbool is_private_game(void);
