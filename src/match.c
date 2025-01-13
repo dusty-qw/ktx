@@ -282,6 +282,7 @@ void EndMatch(float skip_log)
 	char *tmp;
 	float f1;
 	qbool is_real_match_end = !isHoonyModeAny() || HM_is_game_over();
+	qbool f_modified_done = false, f_ruleset_done = false, f_version_done = false;
 
 	if (match_over || !match_in_progress)
 	{
@@ -399,6 +400,22 @@ void EndMatch(float skip_log)
 		for (p = world; (p = find_plr(p));)
 		{
 			p->ready = 0; // force players be not ready after match is end.
+
+			if (cvar("k_on_end_f_modified") && !f_modified_done)
+			{
+				stuffcmd(p, "say f_modified\n");
+				f_modified_done = true;
+			}
+			if (cvar("k_on_end_f_ruleset") && !f_ruleset_done)
+			{
+				stuffcmd(p, "say f_ruleset\n");
+				f_ruleset_done = true;
+			}
+			if (cvar("k_on_end_f_version") && !f_version_done)
+			{
+				stuffcmd(p, "say f_version\n");
+				f_version_done = true;
+			}
 		}
 	}
 
@@ -880,9 +897,10 @@ void SM_PrepareMap(void)
 // put clients in server and reset some params
 static void SM_PrepareClients(void)
 {
-	int hdc, i;
+	int hdc, i, j, player_count = 0;
 	char *pl_team;
-	gedict_t *p;
+	gedict_t *p, *temp;
+	gedict_t *players[MAX_CLIENTS];
 	qbool hoonymode_reset = isHoonyModeAny() && HM_current_point() > 0;
 
 	k_teamid = 666;
@@ -890,8 +908,23 @@ static void SM_PrepareClients(void)
 	trap_executecmd(); // <- this really needed
 
 	initial_match_spawns = true;
+
 	for (p = world; (p = find_plr(p));)
 	{
+		players[player_count++] = p;
+	}
+
+	for (i = player_count - 1; i > 0; i--)
+	{
+		j = rand() % (i + 1);
+		temp = players[i];
+		players[i] = players[j];
+		players[j] = temp;
+	}
+
+	for (j = 0; j < player_count; j++)
+	{
+		p = players[j];
 		if (!k_matchLess)
 		{
 			// skip setup k_teamnum in matchLess mode
@@ -2787,6 +2820,21 @@ void PlayerReady(qbool startIdlebot)
 		if (k_attendees && (nready == k_attendees))
 		{
 			G_bprint(2, "All players ready\n");
+		}
+
+		if (cvar("k_on_start_f_modified"))
+		{
+			stuffcmd(self, "say f_modified\n");
+		}
+
+		if (cvar("k_on_start_f_ruleset"))
+		{
+			stuffcmd(self, "say f_ruleset\n");
+		}
+
+		if (cvar("k_on_start_f_version"))
+		{
+			stuffcmd(self, "say f_version\n");
 		}
 
 		G_bprint(2, "Timer started\n");

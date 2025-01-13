@@ -4,8 +4,11 @@
 typedef union fi_s
 {
 	float _float;
-	intptr_t _int;
+	int _int;
 } fi_t;
+
+static unsigned int field_ref_alpha = 0;
+static unsigned int field_ref_colormod = 0;
 
 void trap_SetExtField_i(gedict_t *ed, const char *fieldname, int val)
 {
@@ -18,7 +21,6 @@ void trap_SetExtField_i(gedict_t *ed, const char *fieldname, int val)
 		G_bprint(PRINT_HIGH, "SetExtField(%s, %s, %d) not supported by server\n", ed->classname, fieldname, val);
 	}
 }
-
 void trap_SetExtField_f(gedict_t *ed, const char *fieldname, float val)
 {
 	if (HAVEEXTENSION(G_SETEXTFIELD))
@@ -33,23 +35,68 @@ void trap_SetExtField_f(gedict_t *ed, const char *fieldname, float val)
 	}
 }
 
-int trap_GetExtField_i(gedict_t *ed, const char *fieldname)
+void ExtFieldSetAlpha(gedict_t *ed, float alpha)
 {
-	int ival = -1;
-	if (HAVEEXTENSION(G_GETEXTFIELD))
+	alpha = bound(0.0f, alpha, 1.0f);
+	if (!field_ref_alpha && HAVEEXTENSION(G_MAPEXTFIELDPTR) && HAVEEXTENSION(G_SETEXTFIELDPTR))
 	{
-		ival = trap_GetExtField(ed, fieldname);
+		field_ref_alpha = trap_MapExtFieldPtr("alpha");
 	}
-	return ival;
+	if (field_ref_alpha)
+	{
+		trap_SetExtFieldPtr(ed, field_ref_alpha, (void*)&alpha, sizeof(float));
+	}
+	else if (HAVEEXTENSION(G_SETEXTFIELD))
+	{
+		fi_t v;
+		v._float = alpha;
+		trap_SetExtField(ed, "alpha", v._int);
+	}
+	else if (cvar("developer"))
+	{
+		G_bprint(PRINT_HIGH, "alpha needs SetExtField or MapExtFieldPtr and SetExtFieldPtr support in server\n");
+	}
 }
 
-float trap_GetExtField_f(gedict_t *ed, const char *fieldname)
+float ExtFieldGetAlpha(gedict_t *ed)
 {
 	fi_t tmp;
 	tmp._float = -1.0f;
-	if (HAVEEXTENSION(G_GETEXTFIELD))
+	if (!field_ref_alpha && HAVEEXTENSION(G_MAPEXTFIELDPTR) && HAVEEXTENSION(G_GETEXTFIELDPTR))
 	{
-		tmp._int = trap_GetExtField(ed, fieldname);
+		field_ref_alpha = trap_MapExtFieldPtr("alpha");
+	}
+	if (field_ref_alpha)
+	{
+		trap_GetExtFieldPtr(ed, field_ref_alpha, (void*)&tmp._float, sizeof(float));
+	}
+	else if (HAVEEXTENSION(G_GETEXTFIELD))
+	{
+		tmp._int = trap_GetExtField(ed, "alpha");
+	}
+	else if (cvar("developer"))
+	{
+		G_bprint(PRINT_HIGH, "alpha needs GetExtField or MapExtFieldPtr and GetExtFieldPtr support in server\n");
 	}
 	return tmp._float;
+}
+
+void ExtFieldSetColorMod(gedict_t *ed, float r, float g, float b)
+{
+	if (!field_ref_colormod && HAVEEXTENSION(G_MAPEXTFIELDPTR) && HAVEEXTENSION(G_SETEXTFIELDPTR))
+	{
+		field_ref_colormod = trap_MapExtFieldPtr("colormod");
+	}
+	if (field_ref_colormod)
+	{
+		float rgb[3];
+		rgb[0] = max(0.0f, r);
+		rgb[1] = max(0.0f, g);
+		rgb[2] = max(0.0f, b);
+		trap_SetExtFieldPtr(ed, field_ref_colormod, (void*)&rgb, sizeof(rgb));
+	}
+	else if (cvar("developer"))
+	{
+		G_bprint(PRINT_HIGH, "colormod needs MapExtFieldPtr and SetExtFieldPtr support in server\n");
+	}
 }

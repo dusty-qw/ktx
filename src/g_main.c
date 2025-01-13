@@ -669,6 +669,9 @@ static qbool G_InitExtensions(void)
 		{"clientstat",			G_CLIENTSTAT},
 		{"pointerstat",			G_POINTERSTAT},
 		#endif
+		{"MapExtFieldPtr",		G_MAPEXTFIELDPTR},
+		{"SetExtFieldPtr",		G_SETEXTFIELDPTR},
+		{"GetExtFieldPtr",		G_GETEXTFIELDPTR},
 	};
 	int i;
 	for (i = 0; i < sizeof(exttraps)/sizeof(exttraps[0]); i++)

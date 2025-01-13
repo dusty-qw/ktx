@@ -114,6 +114,7 @@ void ToggleNoSweep(void);
 void ToggleInstagib(void);
 void ToggleLGC(void);
 void ToggleCGKickback(void);
+void ToggleToT(void);
 void TogglePowerups(void);
 void TogglePuPickup(void);
 void ToggleQEnemy(void);
@@ -136,11 +137,13 @@ void Wp_Reset(void);
 void Wp_Stats(float on);
 void Sc_Stats(float on);
 void t_jump(float j_type);
-void klist(void);
 void hdptoggle(void);
 void handicap(void);
 void noweapon(void);
+void toggletracklist(void);
 void tracklist(void);
+void toggleklist(void);
+void klist(void);
 void fpslist(void);
 void krnd(void);
 void agree_on_map(void);
@@ -823,6 +826,7 @@ cmd_t cmds[] =
 	{ "tkfjump", 					DEF(t_jump), 					1, 			CF_BOTH_ADMIN, 															CD_TKFJUMP },
 	{ "tkrjump", 					DEF(t_jump), 					2, 			CF_BOTH_ADMIN, 															CD_TKRJUMP },
 	{ "klist", 						klist, 							0, 			CF_BOTH | CF_MATCHLESS, 												CD_KLIST },
+	{ "toggleklist", 					toggleklist, 						0, 			CF_BOTH | CF_MATCHLESS, 												CD_TRACKLIST },
 	{ "hdptoggle", 					hdptoggle, 						0, 			CF_BOTH_ADMIN, 															CD_HDPTOGGLE },
 	{ "handicap", 					handicap, 						0, 			CF_PLAYER | CF_PARAMS | CF_MATCHLESS, 									CD_HANDICAP },
 	{ "noweapon", 					noweapon, 						0, 			CF_PLAYER | CF_PARAMS | CF_SPC_ADMIN, 									CD_NOWEAPON },
@@ -830,6 +834,7 @@ cmd_t cmds[] =
 	{ "cam", 						ShowCamHelp, 					0, 			CF_SPECTATOR | CF_MATCHLESS, 											CD_CAM },
 
 	{ "tracklist", 					tracklist, 						0, 			CF_BOTH | CF_MATCHLESS, 												CD_TRACKLIST },
+	{ "toggletracklist", 					toggletracklist, 						0, 			CF_BOTH | CF_MATCHLESS, 												CD_TRACKLIST },
 	{ "fpslist", 					fpslist, 						0, 			CF_BOTH | CF_MATCHLESS, 												CD_FPSLIST },
 
 	{ "fav1_add", 					DEF(favx_add), 					1, 			CF_SPECTATOR, 															CD_FAV1_ADD },
@@ -4442,6 +4447,7 @@ const char tot_um_init[] =
 	"dq 0\n"
 	"dr 0\n"
 	"k_bzk 0\n"
+	"k_disallow_weapons 80\n"
 	"k_exttime 0\n"
 	"k_fb_enabled 1\n"
 	"k_fb_quad_multiplier 8\n"
@@ -5001,6 +5007,12 @@ void klist(void)
 	gedict_t *p = world;
 	char *track;
 
+	if (!cvar("k_allowklist") && match_in_progress && self->ct == ctPlayer)
+	{
+		G_sprint(self, 2, "klist is disabled\n");
+		return;
+	}
+
 	for (i = 0, p = world; (p = find_plr(p)); i++)
 	{
 		if (!i)
@@ -5093,6 +5105,27 @@ void klist(void)
 	}
 }
 
+void toggleklist(void)
+{
+	int k_allowklist = !cvar("k_allowklist");
+
+	if (match_in_progress)
+	{
+		return;
+	}
+
+	cvar_fset("k_allowklist", k_allowklist);
+
+	if (k_allowklist)
+	{
+		G_bprint(2, "klist: %s - remember to also toggle tracklist\n", redtext("on"));
+	}
+	else
+	{
+		G_bprint(2, "klist: %s - remember to also toggle tracklist\n", redtext("off"));
+	}
+}
+
 void hdptoggle(void)
 {
 	if (match_in_progress)
@@ -5108,6 +5141,15 @@ void hdptoggle(void)
 void handicap(void)
 {
 	char arg_2[1024];
+	qbool k_lgc = cvar(LGCMODE_VARIABLE) != 0;
+
+	if (k_lgc)
+	{
+		G_sprint(self, 2, "Handicap is not allowed in LGC mode\n");
+
+		return;
+	}
+
 
 	if (trap_CmdArgc() != 2)
 	{
@@ -5230,6 +5272,12 @@ void tracklist(void)
 	char *track;
 	char *nt = redtext(" not tracking");
 
+	if (!cvar("k_allowtracklist") && match_in_progress && self->ct == ctPlayer)
+	{
+		G_sprint(self, 2, "tracklist is disabled\n");
+		return;
+	}
+
 	for (i = 0, p = world; (p = find_spc(p)); i++)
 	{
 		if (!i)
@@ -5245,6 +5293,27 @@ void tracklist(void)
 	if (!i)
 	{
 		G_sprint(self, 2, "No spectators present\n");
+	}
+}
+
+void toggletracklist(void)
+{
+	int k_allowtracklist = !cvar("k_allowtracklist");
+
+	if (match_in_progress)
+	{
+		return;
+	}
+
+	cvar_fset("k_allowtracklist", k_allowtracklist);
+
+	if (k_allowtracklist)
+	{
+		G_bprint(2, "tracklist: %s - remember to also toggle klist\n", redtext("on"));
+	}
+	else
+	{
+		G_bprint(2, "tracklist: %s - remember to also toggle klist\n", redtext("off"));
 	}
 }
 
@@ -7638,6 +7707,15 @@ void ToggleLGC(void)
 		cvar_set("k_instagib", "0");
 	}
 
+	// disable dmgfrags
+	if (cvar("k_dmgfrags"))
+	{
+		cvar_set("k_dmgfrags", "0");
+	}
+
+	// turn off handicap
+	SetHandicap(self, 100);
+
 	cvar_set(LGCMODE_VARIABLE, k_lgc ? "1" : "0");
 
 	cvar_toggle_msg(self, LGCMODE_VARIABLE, redtext("LGC mode"));
@@ -7871,8 +7949,17 @@ void iplist(void)
 
 void dmgfrags(void)
 {
+	qbool k_lgc = cvar(LGCMODE_VARIABLE) != 0;
+
 	if (!is_rules_change_allowed())
 	{
+		return;
+	}
+
+	if (k_lgc)
+	{
+		G_sprint(self, 2, "Dmgfrags is not allowed in LGC mode\n");
+
 		return;
 	}
 
