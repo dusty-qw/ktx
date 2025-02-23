@@ -438,15 +438,13 @@ intptr_t VISIBILITY_VISIBLE vmMain(
 			return 0;
 
 		case GAME_EDICT_CSQCSEND:
-
 			self = PROG_TO_EDICT(g_globalvars.self);
-
-			// if (self->SendEntity)
-			// 	return ((int(*)(edict_t*, int))(self->SendEntity))(PROG_TO_EDICT(arg0), arg1);
+			other = PROG_TO_EDICT(g_globalvars.other);
 
 			if (self->SendEntity)
-    			return ((int(*)(edict_t*, int))(self->SendEntity))((edict_t*)PROG_TO_EDICT(arg0), arg1);
-
+			{
+				return ((int(*)(int))(self->SendEntity))(arg0);
+			}
 
 			return 0;
 	}
@@ -672,6 +670,7 @@ static qbool G_InitExtensions(void)
 		{"MapExtFieldPtr",		G_MAPEXTFIELDPTR},
 		{"SetExtFieldPtr",		G_SETEXTFIELDPTR},
 		{"GetExtFieldPtr",		G_GETEXTFIELDPTR},
+		{"setsendneeded",		G_SETSENDNEEDED},
 	};
 	int i;
 	for (i = 0; i < sizeof(exttraps)/sizeof(exttraps[0]); i++)

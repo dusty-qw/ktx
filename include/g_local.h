@@ -76,7 +76,7 @@
 
 #define MOD_NAME				("KTX")
 #define MOD_FULLNAME			("KTX: Kombat Teams eXtreme")
-#define MOD_VERSION				("1.45-dev-r402")
+#define MOD_VERSION				("1.46-dev-r402")
 #define MOD_BUILD_DATE			(__DATE__ ", " __TIME__)
 #define MOD_SERVERINFO_MOD_KEY	("ktxver")
 #define MOD_URL					("https://github.com/QW-Group/ktx")
@@ -222,6 +222,7 @@ enum
 	G_MAPEXTFIELDPTR,
 	G_SETEXTFIELDPTR,
 	G_GETEXTFIELDPTR,
+	G_SETSENDNEEDED,
 	G_EXTENSIONS_LAST
 };
 extern qbool haveextensiontab[G_EXTENSIONS_LAST-G_EXTENSIONS_FIRST];

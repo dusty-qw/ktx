@@ -1277,6 +1277,7 @@ void LightningHit(gedict_t *from, float damage)
 	{
 		WS_Mark(from, wpLG);
 		from->ps.wpn[wpLG].hits++;
+		from->ps.wpn[wpLG].lastfraghits++;
 	}
 
 	WriteByte( MSG_MULTICAST, SVC_TEMPENTITY);
@@ -1415,6 +1416,7 @@ void W_FireLightning(void)
 	WS_Mark(self, wpLG);
 
 	self->ps.wpn[wpLG].attacks++;
+	self->ps.wpn[wpLG].lastfragattacks++;
 
 	if (self->t_width < g_globalvars.time)
 	{

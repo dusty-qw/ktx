@@ -96,6 +96,12 @@ typedef struct wpType_s
 	int edamage;		// damage to enemies
 	int tdamage;		// damage to team-mates
 
+	int enemyjustkilled;
+	int lastfraghits;			// count of hits for lg per frag
+	int lastfragattacks;		// count of attacks for lg per frag
+	int lastfragdisplayhits;	// stores count of last frag hits
+	int lastfragdisplayattacks;	// stores count of last frag attacks
+
 	float time;			// total time u have some weapon
 } wpType_t;
 
@@ -1284,6 +1290,10 @@ typedef struct gedict_s
 // { trigger_heal
 	float healmax;                          // maximum health see triggers.c for defaults
 	float healtimer;                        // internal timer for tracking health replenishment interval
+// }
+
+// { csqc
+	func_t SendEntity;
 // }
 } gedict_t;
 
