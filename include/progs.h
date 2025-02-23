@@ -1261,10 +1261,6 @@ typedef struct gedict_s
 	struct gedict_s *weapon_pred;
 // }
 
-// { csqc
-	func_t SendEntity;
-// }
-
 // { hiprot fields
 	int rotate_type;                        // internal, rotate(0), movewall(1), setorigin(2), see hiprot.c
 	vec3_t neworigin;                       // internal, origin tracking

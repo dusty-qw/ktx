@@ -156,7 +156,6 @@ void trap_SetExtField_i(gedict_t *ed, const char *fieldname, int val);
 void trap_SetExtField_f(gedict_t *ed, const char *fieldname, float val);
 int trap_GetExtField_i(gedict_t *ed, const char *fieldname);
 float trap_GetExtField_f(gedict_t *ed, const char *fieldname);
-void trap_SetSendNeeded(int subject, int flags, int to);
 void ExtFieldSetAlpha(gedict_t *ed, float alpha);
 float ExtFieldGetAlpha(gedict_t *ed);
 void ExtFieldSetColorMod(gedict_t *ed, float r, float g, float b);

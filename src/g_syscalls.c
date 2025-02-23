@@ -491,11 +491,6 @@ int trap_GetExtField(gedict_t *ed, const char *fieldname)
 	return syscall(G_GETEXTFIELD, (intptr_t)ed, (intptr_t)fieldname);
 }
 
-void trap_SetSendNeeded(int subject, int flags, int to)
-{
-	syscall(G_SETSENDNEEDED, subject, flags, to);
-}
-
 void trap_changelevelHub(const char *name, const char *entityname, const char *startspot)
 {
 	syscall(G_CHANGELEVEL_HUB, name, entityname, startspot);
