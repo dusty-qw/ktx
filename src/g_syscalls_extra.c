@@ -12,31 +12,6 @@ static unsigned int field_ref_colormod = 0;
 static unsigned int field_ref_sendentity = 0;
 static unsigned int field_ref_pvsflags = 0;
 
-void trap_SetExtField_i(gedict_t *ed, const char *fieldname, int val)
-{
-	if (HAVEEXTENSION(G_SETEXTFIELD))
-	{
-		trap_SetExtField(ed, fieldname, val);
-	}
-	else
-	{
-		G_bprint(PRINT_HIGH, "SetExtField(%s, %s, %d) not supported by server\n", ed->classname, fieldname, val);
-	}
-}
-void trap_SetExtField_f(gedict_t *ed, const char *fieldname, float val)
-{
-	if (HAVEEXTENSION(G_SETEXTFIELD))
-	{
-		fi_t rc;
-		rc._float = val;
-		trap_SetExtField(ed, fieldname, rc._int);
-	}
-	else
-	{
-		G_bprint(PRINT_HIGH, "SetExtField(%s, %s, %f) not supported by server\n", ed->classname, fieldname, val);
-	}
-}
-
 void ExtFieldSetAlpha(gedict_t *ed, float alpha)
 {
 	alpha = bound(0.0f, alpha, 1.0f);

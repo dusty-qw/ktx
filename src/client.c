@@ -1674,11 +1674,9 @@ void WeaponPrediction_CreateEnt(void)
 {
 	gedict_t *wep_values = spawn();
 	wep_values->s.v.owner = EDICT_TO_PROG(self);
-	trap_SetExtField_i(wep_values, "SendEntity", 1);
-	trap_SetExtField_f(wep_values, "pvsflags", 3);
-	wep_values->SendEntity = (func_t)WeaponPrediction_SendEntity;
-	trap_SetSendNeeded(NUM_FOR_EDICT(wep_values), 0xFFFFFF, 0);
-
+	ExtFieldSetSendEntity(wep_values, (func_t)WeaponPrediction_SendEntity);
+	ExtFieldSetPvsFlags(wep_values, 3);
+	SetSendNeeded(wep_values, 0xFFFFFF, 0);
 	self->weapon_pred = wep_values;
 }
 

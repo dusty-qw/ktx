@@ -152,8 +152,6 @@ intptr_t trap_GetExtFieldPtr(gedict_t *ed, intptr_t fieldref, intptr_t *data, in
 intptr_t trap_SetSendNeeded(intptr_t subject, intptr_t flags, intptr_t to);
 
 // Checks for server support before call
-void trap_SetExtField_i(gedict_t *ed, const char *fieldname, int val);
-void trap_SetExtField_f(gedict_t *ed, const char *fieldname, float val);
 int trap_GetExtField_i(gedict_t *ed, const char *fieldname);
 float trap_GetExtField_f(gedict_t *ed, const char *fieldname);
 void ExtFieldSetAlpha(gedict_t *ed, float alpha);

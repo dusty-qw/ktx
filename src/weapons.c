@@ -1212,9 +1212,8 @@ void W_FireRocket(void)
 	newmis->s.v.solid = (isRACE() ? SOLID_TRIGGER : SOLID_BBOX);
 
 	// CSQC projectile optmization
-	trap_SetExtField_i(newmis, "SendEntity", 1);
-	newmis->SendEntity = (func_t)SendEntity_Projectile;
-	trap_SetSendNeeded(NUM_FOR_EDICT(newmis), 255, 0);
+	ExtFieldSetSendEntity(newmis, (func_t)SendEntity_Projectile);
+	SetSendNeeded(newmis, 255, 0);
 
 	// set newmis speed
 	trap_makevectors(self->s.v.v_angle);
@@ -1676,9 +1675,8 @@ void launch_spike(vec3_t org, vec3_t dir)
 	vectoangles(newmis->s.v.velocity, newmis->s.v.angles);
 
 	// CSQC projectile optmization
-	trap_SetExtField_i(newmis, "SendEntity", 1);
-	newmis->SendEntity = (func_t)SendEntity_Projectile;
-	trap_SetSendNeeded(NUM_FOR_EDICT(newmis), 255, 0);
+	ExtFieldSetSendEntity(newmis, (func_t)SendEntity_Projectile);
+	SetSendNeeded(newmis, 255, 0);
 }
 
 static qbool race_ignore_spike(gedict_t *self, gedict_t *other)
