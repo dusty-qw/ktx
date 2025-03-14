@@ -71,6 +71,7 @@ void CTFBasedSpawn(void);
 // } CTF
 void FragsDown(void);
 void FragsUp(void);
+void LeaveMeAlone(void);
 void ListWhoNot(void);
 void ModStatus1(void);
 void ModStatus2(void);
@@ -393,6 +394,7 @@ const char CD_NODESC[] = "no desc";
 #define CD_CTOCT			"Show octal charset table"
 #define CD_CTHEX			"Show hexadecimal charset table"
 #define CD_SHOWNICK			"pointed player's info"
+#define CD_LEAVEMEALONE			"can't shoot/bounce players in prewar"
 #define CD_TIME5			"set timelimit to 5 mins"
 #define CD_TIME10			"set timelimit to 10 mins"
 #define CD_TIME15			"set timelimit to 15 mins"
@@ -756,6 +758,7 @@ cmd_t cmds[] =
 	{ "sct_hex", 					ShowCharsetTableHexa, 			0, 			CF_BOTH, 																CD_CTHEX },
 	{ "about", 						ShowVersion, 					0, 			CF_BOTH | CF_MATCHLESS, 												CD_ABOUT },
 	{ "shownick", 					ShowNick, 						0, 			CF_PLAYER | CF_PARAMS, 													CD_SHOWNICK },
+	{ "leavemealone", 				LeaveMeAlone, 					0, 			CF_PLAYER | CF_PARAMS, 													CD_LEAVEMEALONE },
 	{ "time5", 						DEF(TimeSet), 					5.0f, 		CF_PLAYER | CF_SPC_ADMIN, 												CD_TIME5 },
 	{ "time10", 					DEF(TimeSet), 					10.0f, 		CF_PLAYER | CF_SPC_ADMIN, 												CD_TIME10 },
 	{ "time15", 					DEF(TimeSet), 					15.0f, 		CF_PLAYER | CF_SPC_ADMIN, 												CD_TIME15 },
@@ -4078,6 +4081,30 @@ ok:
 
 	self->need_clearCP = 1;
 	self->shownick_time = g_globalvars.time + 0.8; // clear centerprint at this time
+}
+
+void LeaveMeAlone(void)
+{
+	if (match_in_progress)
+	{
+		return;
+	}
+
+	if (isRA() || isRACE())
+	{
+		return;
+	}
+
+	if (self->leavemealone)
+	{
+		G_bprint(2, "%s %s\n", self->netname, redtext("no longer wants to be left alone"));
+	}
+	else
+	{
+		G_bprint(2, "%s %s\n", self->netname, redtext("wants to be left alone"));
+	}
+
+	self->leavemealone = !self->leavemealone;
 }
 
 // qqshka

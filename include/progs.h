@@ -976,6 +976,8 @@ typedef struct gedict_s
 	float fIllegalFPSWarnings;
 // ILLEGALFPS]
 
+	qbool leavemealone;						// if player doesn't want to be shot by other players during pre war
+
 // SOCD detectioin
 	float fStrafeChangeCount;
 	float fFramePerfectStrafeChangeCount;
