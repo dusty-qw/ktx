@@ -45,6 +45,7 @@ void VoteYes(void);
 void VoteNo(void);
 void VoteCaptain(void);
 void VoteCoach(void);
+void SuggestColorVote(void);
 void nospecs(void);
 void teamoverlay(void);
 void votecoop(void);
@@ -432,6 +433,7 @@ const char CD_NODESC[] = "no desc";
 #define CD_NO				"withdraws vote"
 #define CD_CAPTAIN			"toggle captain election"
 #define CD_COACH			"toggle coach election"
+#define CD_SUGGESTCOLOR			"toggle suggest color vote"
 #define CD_FREEZE			"(un)freeze the map"
 #define CD_RPICKUP			"vote random team pickup"
 #define CD_1ON1				"duel settings"
@@ -801,6 +803,7 @@ cmd_t cmds[] =
 	{ "no", 						VoteNo, 						0, 			CF_PLAYER | CF_MATCHLESS, 												CD_NO },
 	{ "captain", 					VoteCaptain, 					0, 			CF_PLAYER, 																CD_CAPTAIN },
 	{ "coach", 						VoteCoach, 						0, 			CF_SPECTATOR, 															CD_COACH },
+	{ "suggestcolor", 					SuggestColorVote,					0, 			CF_PLAYER | CF_PARAMS, 															CD_SUGGESTCOLOR },
 	{ "freeze", 					ToggleFreeze, 					0, 			CF_PLAYER | CF_SPC_ADMIN, 												CD_FREEZE },
 	{ "rpickup", 					RandomPickup, 					0, 			CF_PLAYER | CF_SPC_ADMIN, 												CD_RPICKUP },
 
@@ -2663,7 +2666,7 @@ void ReportMe(void)
 
 void ToggleRespawns(void)
 {
-	int k_spw = bound(0, cvar("k_spw"), 4);
+	int k_spw = bound(-1, cvar("k_spw"), 4);
 
 	if (match_in_progress)
 	{
@@ -2672,7 +2675,7 @@ void ToggleRespawns(void)
 
 	if (++k_spw > 4)
 	{
-		k_spw = 0;
+		k_spw = -1;
 	}
 
 	cvar_fset("k_spw", k_spw);

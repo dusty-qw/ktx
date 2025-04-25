@@ -240,9 +240,6 @@ typedef enum
 
 // g_utils.c
 
-// K_SPW_0_NONRANDOM changes "Normal QW respawns" to "pre-qtest nonrandom respawns"
-#define K_SPW_0_NONRANDOM
-
 void g_random_seed(int);
 float g_random(void);
 float crandom(void);
@@ -804,6 +801,14 @@ typedef struct rpickupTeams_s
 	char bottomColor[3];
 	char stuffCmd[30];
 } rpickupTeams_t;
+
+typedef struct suggestcolor_s
+{
+	int top;
+	int bottom;
+	int num_userids;
+	int userids[MAX_CLIENTS];
+} suggestcolor_t;
 
 extern votemap_t maps_voted[];
 int vote_get_maps(void);
