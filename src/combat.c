@@ -474,20 +474,15 @@ void T_Damage(gedict_t *targ, gedict_t *inflictor, gedict_t *attacker, float dam
 	// don't bounce around players in prewar who wish to be left alone
 	if (match_in_progress != 2 && targ->leavemealone)
 	{
-		// you can still rocket jump
-		if (attacker == targ)
+		if (attacker != targ && ((targ->ct == ctPlayer) && (attacker->ct == ctPlayer)))
 		{
-			tp4teamdmg = true;
+			return;
 		}
 		else if (dtTELE1 == targ->deathtype	// always do tele damage
 				|| dtTELE2 == targ->deathtype	// always do tele damage
 				|| dtTELE3 == targ->deathtype)	// always do tele damage
 		{
 			// telefrags still work, to avoid getting stuck
-		}
-		else
-		{
-			return;
 		}
 	}
 

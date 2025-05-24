@@ -427,6 +427,12 @@ void TraceAttack(float damage, vec3_t dir, qbool send_effects)
 		return;
 	}
 
+	//can't touch/damage players who want to be left alone
+	if (PROG_TO_EDICT(g_globalvars.trace_ent)->ct == ctPlayer && PROG_TO_EDICT(g_globalvars.trace_ent)->leavemealone)
+	{
+		return;
+	}
+
 	if (PROG_TO_EDICT(g_globalvars.trace_ent)->s.v.takedamage)
 	{
 		if (PROG_TO_EDICT(g_globalvars.trace_ent)->ct == ctPlayer)
@@ -1064,6 +1070,11 @@ void T_MissileTouch(void)
 		return;
 	}
 
+	if (other->leavemealone)
+	{
+		return;
+	}
+
 	if (self->voided)
 	{
 		return;
@@ -1507,6 +1518,12 @@ void GrenadeTouch(void)
 		return;
 	}
 
+	// can't touch players who want to be left alone
+	if (other->leavemealone)
+	{
+		return;
+	}
+
 	if (other->s.v.takedamage)
 	{
 		if (other->ct == ctPlayer)
@@ -1711,6 +1728,12 @@ void spike_touch(void)
 	}
 
 	if (race_ignore_spike(self, other))
+	{
+		return;
+	}
+
+	// can't touch players who want to be left alone
+	if (other->leavemealone)
 	{
 		return;
 	}

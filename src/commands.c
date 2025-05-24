@@ -4101,12 +4101,15 @@ void LeaveMeAlone(void)
 	if (self->leavemealone)
 	{
 		G_bprint(2, "%s %s\n", self->netname, redtext("no longer wants to be left alone"));
+		self->s.v.solid = SOLID_SLIDEBOX;
 	}
 	else
 	{
 		G_bprint(2, "%s %s\n", self->netname, redtext("wants to be left alone"));
+		self->s.v.solid = SOLID_TRIGGER;
 	}
 
+	setorigin(self, PASSVEC3(self->s.v.origin));
 	self->leavemealone = !self->leavemealone;
 }
 
