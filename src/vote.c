@@ -97,6 +97,7 @@ void ElectThink(void)
 void VoteYes(void)
 {
 	int votes;
+	gedict_t *p;
 
 	if (!get_votes(OV_ELECT))
 	{
@@ -115,6 +116,27 @@ void VoteYes(void)
 		G_sprint(self, 2, "--- your vote is still good ---\n");
 
 		return;
+	}
+
+	// For late join elections, check if voter is on the requested team
+	if (get_elect_type() == etLateJoin)
+	{
+		// Find the player being elected
+		for (p = world; (p = find_client(p));)
+		{
+			if (is_elected(p, etLateJoin))
+			{
+				char *requested_team = p->ljteam;
+				
+				// Only players on the requested team can vote
+				if (!self->ca_ready || !streq(getteam(self), requested_team))
+				{
+					G_sprint(self, 2, "Only members of team %s can vote\n", requested_team);
+					return;
+				}
+				break;
+			}
+		}
 	}
 
 //	register the vote
@@ -189,6 +211,40 @@ int get_votes_by_value(int fofs, int value)
 	return votes;
 }
 
+// Count votes from members of a specific team for late join
+int get_latejoin_votes(char *team)
+{
+	int votes = 0;
+	gedict_t *p;
+
+	for (p = world; (p = find_client(p));)
+	{
+		if (p->v.elect && p->ca_ready && streq(getteam(p), team))
+		{
+			votes++;
+		}
+	}
+
+	return votes;
+}
+
+// Count eligible voters on a team for late join
+int count_team_voters(char *team)
+{
+	int count = 0;
+	gedict_t *p;
+
+	for (p = world; (p = find_plr(p));)
+	{
+		if (p->ca_ready && streq(getteam(p), team) && !p->s.v.owner)
+		{
+			count++;
+		}
+	}
+
+	return count;
+}
+
 int get_votes_req(int fofs, qbool diff)
 {
 	float percent = 51;
@@ -245,11 +301,15 @@ int get_votes_req(int fofs, qbool diff)
 				percent = cvar("k_vp_suggestcolor");
 				break;
 			}
+			else if (el_type == etLateJoin)
+			{
+				percent = 51; // Default to 51% for late join
+				break;
+			}
 			else
 			{
 				percent = 100;
 				break; // unknown/none election
-				break;
 			}
 			break;
 
@@ -296,7 +356,28 @@ int get_votes_req(int fofs, qbool diff)
 		vt_req = ceil(percent * (CountPlayers() - CountBots()));
 	}
 
-	if (fofs == OV_ELECT)
+	// Special handling for late join elections
+	if ((fofs == OV_ELECT) && (get_elect_type() == etLateJoin))
+	{
+		gedict_t *p;
+		// Find the player being elected
+		for (p = world; (p = find_client(p));)
+		{
+			if (is_elected(p, etLateJoin))
+			{
+				char *requested_team = p->ljteam;
+				if (requested_team[0])
+				{
+					// Count only team votes and require majority from that team
+					votes = get_latejoin_votes(requested_team);
+					vt_req = ceil(percent * count_team_voters(requested_team));
+					vt_req = max(1, vt_req); // at least 1 vote needed
+				}
+				break;
+			}
+		}
+	}
+	else if (fofs == OV_ELECT)
 	{
 		vt_req = max(2, vt_req); // if election, at least 2 votes needed
 	}
@@ -419,6 +500,11 @@ int get_elect_type(void)
 		{
 			return etSuggestColor;
 		}
+
+		if (is_elected(p, etLateJoin))
+		{
+			return etLateJoin;
+		}
 	}
 
 	return etNone;
@@ -439,6 +525,12 @@ char* get_elect_type_str(void)
 
 		case etAdmin:
 			return "Admin";
+
+		case etLateJoin:
+			return "Late Join";
+
+		case etSuggestColor:
+			return "Suggest Color";
 	}
 
 	return "Unknown";
@@ -620,6 +712,19 @@ void vote_check_elect(void)
 			if (is_elected(p, etSuggestColor))
 			{
 				SuggestColorApply();
+			}
+		}
+
+		if (match_in_progress && isCA())
+		{
+			if (is_elected(p, etLateJoin))
+			{
+				// Get the requested team from userinfo
+				char *team = p->ljteam;
+				if (team[0])
+				{
+					CA_AddLatePlayer(p, team);
+				}
 			}
 		}
 
