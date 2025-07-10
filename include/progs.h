@@ -1103,6 +1103,7 @@ typedef struct gedict_s
 	qbool ca_alive;
 	qbool ca_ready;
 	qbool can_respawn;
+	qbool is_solo;							// is player a one-man team?
 	qbool in_play;							// is player still fighting?
 	qbool in_limbo;							// waiting to respawn during wipeout
 	qbool last_alive_active;				// if last alive timer is active
@@ -1120,6 +1121,7 @@ typedef struct gedict_s
 	float ca_round_lghit;
 	float ca_round_lgfired;
 	float alive_time;						// number of seconds player is in play
+	float regen_timer;						// when the regen timer is started
 	float time_of_respawn;					// server time player respawned or round started
 	float seconds_to_respawn;				// number of seconds until respawn
 	float escape_time;						// number of seconds after "escaping"
