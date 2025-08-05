@@ -366,6 +366,10 @@ void CA_MatchBreak(void)
 void track_player(gedict_t *observer)
 {
 	gedict_t *player = ca_get_player(observer);
+	vec3_t delta;
+	float vlen;
+	int follow_distance;
+	int upward_distance;
 
 	if (player && !observer->in_play && observer->tracking_enabled)
 	{
@@ -398,6 +402,39 @@ void track_player(gedict_t *observer)
 
 		// Lock observer's orientation to player POV
 		observer->s.v.movetype = MOVETYPE_LOCK;
+		
+		// Always update position manually for demos/spectators
+		// The player's own view will use trackent which overrides this
+		follow_distance = -10;
+		upward_distance = 0;
+		
+		// Copy angles from tracked player
+		VectorCopy(player->s.v.v_angle, observer->s.v.angles);
+		observer->s.v.fixangle = true;
+		
+		// Calculate observer position behind the tracked player
+		trap_makevectors(player->s.v.angles);
+		VectorMA(player->s.v.origin, follow_distance, g_globalvars.v_forward, observer->s.v.origin);
+		VectorMA(observer->s.v.origin, upward_distance, g_globalvars.v_up, observer->s.v.origin);
+		
+		// Avoid positioning in walls
+		traceline(PASSVEC3(player->s.v.origin), PASSVEC3(observer->s.v.origin), false, player);
+		VectorCopy(g_globalvars.trace_endpos, observer->s.v.origin);
+		
+		if (g_globalvars.trace_fraction == 1)
+		{
+			VectorCopy(g_globalvars.trace_endpos, observer->s.v.origin);
+			VectorMA(observer->s.v.origin, 10, g_globalvars.v_forward, observer->s.v.origin);
+		}
+		else
+		{
+			VectorSubtract(g_globalvars.trace_endpos, player->s.v.origin, delta);
+			vlen = VectorLength(delta);
+			vlen = vlen - 40;
+			VectorNormalize(delta);
+			VectorScale(delta, vlen, delta);
+			VectorAdd(player->s.v.origin, delta, observer->s.v.origin);
+		}
 		
 		// Send tracking info to demo: observer is tracking player
 		// Demo clients can use this to hide player model when viewing from observer's POV
@@ -574,6 +611,7 @@ void CA_PutClientInServer(void)
 
 		self->in_play = true;
 		self->in_limbo = false;
+		self->track_target = NULL; // Reset track target when respawning
 
 		if (!self->teamcolor && self->ca_ready)
 		{
@@ -619,6 +657,7 @@ void CA_PutClientInServer(void)
 		// tracking enabled by default
 		self->tracking_enabled = 1;
 		self->trackent = 0; // Initialize trackent for dead players
+		self->track_target = NULL; // Reset track target when dying
 		self->moveup_pressed = false; // Initialize moveup state
 
 		self->in_play = false;
@@ -1480,29 +1519,43 @@ void CA_player_pre_think(void)
 
 void CA_spectator_think(void)
 {
-	gedict_t *target, *teammate;
-	int id;
+	gedict_t *target;
 
-	target = PROG_TO_EDICT(self->s.v.goalentity); // who we are spectating
-
-	// If spectating a dead player, switch to an alive teammate
-	if (target && target->ct == ctPlayer && !target->in_play)
+	// Safety check for valid goalentity
+	if (!self->s.v.goalentity || self->s.v.goalentity == EDICT_TO_PROG(world))
 	{
-		// Find any alive teammate
-		teammate = ca_find_player(world, target);
-		if (teammate && teammate->in_play && teammate != target)
-		{
-			// Use stuffcmd to switch the spectator to the alive teammate
-			if ((id = GetUserID(teammate)) > 0)
-			{
-				stuffcmd_flags(self, STUFFCMD_IGNOREINDEMO, "track %d\n", id);
-			}
-		}
+		return;
 	}
 	
-	// Get the current viewing target (may have changed due to stuffcmd)
+	target = PROG_TO_EDICT(self->s.v.goalentity); // who we are spectating
+
+	// If spectating a dead player
+	if (target && target != world && target->ct == ctPlayer && !target->in_play)
+	{		
+		// If the dead player is tracking someone, use smooth tracking via trackent
+		if (target->tracking_enabled && target->track_target && target->track_target->in_play)
+		{
+			// Set trackent to follow who the dead player is following
+			self->trackent = NUM_FOR_EDICT(target->track_target);
+			self->hideentity = EDICT_TO_PROG(target->track_target);
+		}
+		else
+		{
+			// Dead player not tracking anyone, clear trackent
+			self->trackent = 0;
+			self->hideentity = 0;
+		}
+	}
+	else
+	{
+		// Not spectating a dead player, clear trackent so normal spectating works
+		self->trackent = 0;
+		self->hideentity = 0;
+	}
+	
+	// Get the current viewing target
 	target = PROG_TO_EDICT(self->s.v.goalentity);
-	if (target && target->ct == ctPlayer)
+	if (target && target != world && target->ct == ctPlayer)
 	{
 		if (match_in_progress == 2 && ra_match_fight == 2 && round_time > 2 && !ca_round_pause)
 		{
