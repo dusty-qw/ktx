@@ -1262,6 +1262,9 @@ typedef struct gedict_s
 // { csqc
 	func_t SendEntity;
 // }
+// { wipeout spawn
+	float custom_radius;                    // custom spawn radius for wipeout spawns
+// }
 } gedict_t;
 
 typedef enum
