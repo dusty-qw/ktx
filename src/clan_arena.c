@@ -404,17 +404,20 @@ void track_player(gedict_t *observer)
 		// Lock observer's orientation to player POV
 		observer->s.v.movetype = MOVETYPE_LOCK;
 		
-		// Always update position manually for demos/spectators
+		// Always update position manually for demo viewing
 		// The player's own view will use trackent which overrides this
 		follow_distance = -10;
 		upward_distance = 0;
 		
 		// Copy angles from tracked player
+		VectorCopy(player->s.v.v_angle, observer->s.v.v_angle);
 		VectorCopy(player->s.v.v_angle, observer->s.v.angles);
-		observer->s.v.fixangle = true;
+
+		// Don't force immediate angle update - allow client interpolation for smoother demos
+		observer->s.v.fixangle = false;
 		
 		// Calculate observer position behind the tracked player
-		trap_makevectors(player->s.v.angles);
+		trap_makevectors(player->s.v.v_angle);
 		VectorMA(player->s.v.origin, follow_distance, g_globalvars.v_forward, observer->s.v.origin);
 		VectorMA(observer->s.v.origin, upward_distance, g_globalvars.v_up, observer->s.v.origin);
 		
