@@ -498,6 +498,8 @@ void BotSetCommand(gedict_t *self)
 	}
 	else
 	{
+		float move_scale;
+
 		if (jumping && ((int)self->s.v.flags & FL_ONGROUND))
 		{
 			BestJumpingDirection(self);
@@ -507,6 +509,12 @@ void BotSetCommand(gedict_t *self)
 			ApplyPhysics(self);
 		}
 
+		move_scale = sv_maxspeed * 1.25f;
+		if (move_scale > 400.0f)
+		{
+			move_scale = 400.0f;
+		}
+
 		if (self->s.v.waterlevel <= 1)
 		{
 			vec3_t hor;
@@ -514,7 +522,7 @@ void BotSetCommand(gedict_t *self)
 			VectorCopy(self->fb.dir_move_, hor);
 			hor[2] = 0;
 			VectorNormalize(hor);
-			VectorScale(hor, 800, hor);
+			VectorScale(hor, move_scale, hor);
 
 			direction[0] = DotProduct(g_globalvars.v_forward, hor);
 			direction[1] = DotProduct(g_globalvars.v_right, hor);
@@ -522,9 +530,9 @@ void BotSetCommand(gedict_t *self)
 		}
 		else
 		{
-			direction[0] = DotProduct (g_globalvars.v_forward, self->fb.dir_move_) * 800;
-			direction[1] = DotProduct (g_globalvars.v_right, self->fb.dir_move_) * 800;
-			direction[2] = DotProduct (g_globalvars.v_up, self->fb.dir_move_) * 800;
+			direction[0] = DotProduct (g_globalvars.v_forward, self->fb.dir_move_) * move_scale;
+			direction[1] = DotProduct (g_globalvars.v_right, self->fb.dir_move_) * move_scale;
+			direction[2] = DotProduct (g_globalvars.v_up, self->fb.dir_move_) * move_scale;
 		}
 
 #ifdef DEBUG_MOVEMENT

@@ -2814,8 +2814,29 @@ char* make_dots(char *dots, size_t dots_len, int cmd_max_len, char *cmd)
 	int len = cmd_max_len - strlen(cmd);
 	len = bound(0, len, dots_len - 1);
 	memset((void*) dots, (int)'.', len);
-	dots[len] = 0;
-	return dots;
+    dots[len] = 0;
+    return dots;
+}
+
+qbool socd_movement_assisted(gedict_t *p)
+{
+	if (p->totalStrafeChangeCount < 200 || p->socdDetectionCount < 5)
+	{
+		return false;
+	}
+	
+	if ((float)p->totalPerfectStrafeCount / p->totalStrafeChangeCount > 0.58f)
+	{
+		return true;
+	}
+	
+	if (p->socdValidationCount > 0 &&
+	((float)p->socdDetectionCount / p->socdValidationCount) >= 0.10f)
+	{
+		return true;
+	}
+	
+	return false;
 }
 
 qbool socd_movement_assisted(gedict_t *p)
