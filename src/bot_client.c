@@ -140,18 +140,9 @@ void BotClientEntersEvent(gedict_t *self, gedict_t *spawn_pos)
 	self->fb.last_rndaim_time = 0;
 	self->fb.wiggle_run_dir = 0;
 
-	if (isCA())
-	{
-		// Find the nearest navigation marker to the spawn point
-		// Don't use spawn_pos directly - it's not a navigation marker!
-		// This is important to prevent bot games from crashing in CA/Wipeout
-		marker = spawn_pos ? LocateMarker(spawn_pos->s.v.origin) : NULL;
-	}
-	else
-	{
-		// This is wrong but let's keep it to preserve bot behavior
-		marker = spawn_pos;
-	}
+	// Find the nearest navigation marker to the spawn point
+	// Don't use spawn_pos directly - it's not a navigation marker!
+	marker = spawn_pos ? LocateMarker(spawn_pos->s.v.origin) : NULL;
 	SetMarker(self, marker);
 
 	self->fb.arrow = 0;
