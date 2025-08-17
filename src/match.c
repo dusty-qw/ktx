@@ -915,6 +915,16 @@ static void SM_PrepareClients(void)
 	{
 		players[player_count++] = p;
 		p->leavemealone = false;		// can't have this enabled during match
+		p->socdDetectionCount = 0;
+		p->socdValidationCount = 0;
+		p->fStrafeChangeCount = 0;
+		p->fFramePerfectStrafeChangeCount = 0;
+		p->fLastSideMoveSpeed = 0;
+		p->matchStrafeChangeCount = 0;
+		p->matchPerfectStrafeCount = 0;
+		p->totalStrafeChangeCount = 0;
+		p->totalPerfectStrafeCount = 0;
+		p->nullStrafeCount = 0;
 	}
 
 	for (i = player_count - 1; i > 0; i--)
