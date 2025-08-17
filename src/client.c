@@ -3723,11 +3723,11 @@ void PlayerPreThink(void)
 
 				self->socdDetectionCount += 1;
 				if ((!match_in_progress) && (!self->isBot) && k_allow_socd_warning && (self->ct == ctPlayer) && (self->socdDetectionCount >= 2))
-                               {
-                                       G_bprint(PRINT_HIGH,
-                                               "[%s] Warning! %s: Movement assistance detected. Please disable iDrive or keyboard strafe assistance features.\n",
-                               SOCD_DETECTION_VERSION, self->netname);
-                               }
+				{
+					G_bprint(PRINT_HIGH,
+						"[%s] Warning! %s: Movement assistance detected. Please disable iDrive or keyboard strafe assistance features.\n",
+						SOCD_DETECTION_VERSION, self->netname);
+				}
 			}
 
 			self->socdValidationCount += 1;
