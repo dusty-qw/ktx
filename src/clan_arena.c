@@ -439,11 +439,6 @@ void track_player(gedict_t *observer)
 			VectorScale(delta, vlen, delta);
 			VectorAdd(player->s.v.origin, delta, observer->s.v.origin);
 		}
-		
-		// Send tracking info to demo: observer is tracking player
-		// Demo clients can use this to hide player model when viewing from observer's POV
-		stuffcmd_flags(observer, STUFFCMD_DEMOONLY, "//ktx tracking %d %d\n", 
-					   NUM_FOR_EDICT(observer), NUM_FOR_EDICT(player));
 
 		// set observer's health/armor/ammo/weapon to match the player's
 		observer->s.v.ammo_nails = player->s.v.ammo_nails;
@@ -478,10 +473,6 @@ void track_player(gedict_t *observer)
 		observer->s.v.armortype = 0;
 		observer->s.v.health = 100;
 		observer->s.v.items = 0;
-		
-		// Send tracking stop info to demo
-		stuffcmd_flags(observer, STUFFCMD_DEMOONLY, "//ktx tracking %d 0\n", 
-					   NUM_FOR_EDICT(observer));
 	}
 }
 
