@@ -76,7 +76,7 @@
 
 #define MOD_NAME				("KTX")
 #define MOD_FULLNAME			("KTX: Kombat Teams eXtreme")
-#define MOD_VERSION				("1.45-dev")
+#define MOD_VERSION				("1.46-dev")
 #define MOD_BUILD_DATE			(__DATE__ ", " __TIME__)
 #define MOD_SERVERINFO_MOD_KEY	("ktxver")
 #define MOD_URL					("https://github.com/QW-Group/ktx")
@@ -218,6 +218,10 @@ enum
 	G_POINTPARTICLES,
 	G_CLIENTSTAT,
 	G_POINTERSTAT,
+	G_MAPEXTFIELDPTR,
+	G_SETEXTFIELDPTR,
+	G_GETEXTFIELDPTR,
+	G_SETSENDNEEDED,
 	G_EXTENSIONS_LAST
 };
 extern qbool haveextensiontab[G_EXTENSIONS_LAST-G_EXTENSIONS_FIRST];
@@ -235,9 +239,6 @@ typedef enum
 // g_cmd.c
 
 // g_utils.c
-
-// K_SPW_0_NONRANDOM changes "Normal QW respawns" to "pre-qtest nonrandom respawns"
-#define K_SPW_0_NONRANDOM
 
 void g_random_seed(int);
 float g_random(void);
@@ -519,6 +520,7 @@ void PlayerPostThink(void);
 qbool PlayerCanPause(gedict_t *p);
 void SuperDamageSound(void);
 
+char *Spawn_GetModel(void);
 gedict_t* SelectSpawnPoint(char *spawnname);
 
 #define         WP_STATS_UPDATE (0.3f)
@@ -775,6 +777,14 @@ typedef struct rpickupTeams_s
 	char stuffCmd[30];
 } rpickupTeams_t;
 
+typedef struct suggestcolor_s
+{
+	int top;
+	int bottom;
+	int num_userids;
+	int userids[MAX_CLIENTS];
+} suggestcolor_t;
+
 extern votemap_t maps_voted[];
 int vote_get_maps(void);
 
@@ -884,6 +894,7 @@ void CA_player_pre_think(void);
 void CA_spectator_think(void);
 void CA_Frame(void);
 void CA_PutClientInServer(void);
+void CA_AddLatePlayer(gedict_t *p, char *team);
 qbool CA_can_fire(gedict_t *p);
 
 // captain.c

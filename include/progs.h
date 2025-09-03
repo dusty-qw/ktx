@@ -96,6 +96,12 @@ typedef struct wpType_s
 	int edamage;		// damage to enemies
 	int tdamage;		// damage to team-mates
 
+	int enemyjustkilled;
+	int lastfraghits;			// count of hits for lg per frag
+	int lastfragattacks;		// count of attacks for lg per frag
+	int lastfragdisplayhits;	// stores count of last frag hits
+	int lastfragdisplayattacks;	// stores count of last frag attacks
+
 	float time;			// total time u have some weapon
 } wpType_t;
 
@@ -212,7 +218,9 @@ typedef enum
 	etNone = 0,
 	etCaptain,
 	etCoach,
-	etAdmin
+	etAdmin,
+	etSuggestColor,
+	etLateJoin
 } electType_t;
 
 // store player votes here
@@ -522,6 +530,7 @@ typedef struct fb_botskill_s {
 	fb_botaim_t aim_params[2];
 
 	float movement;
+	qbool use_rocketjumps;
 	float combat_jump_chance;
 	float missile_dodge_time;				// minimum time in seconds before bot dodges missile
 
@@ -566,7 +575,7 @@ typedef struct fb_entvars_s {
 
 	int oldsolid;								// need to keep track of this for hazard calculations
 
-	// these determine the desire for items for each player 
+	// these determine the desire for items for each player
 	//   (not just for bots ... bot's desire can take enemy's desire into consideration)
 	fb_desire_funcref_t desire;
 	float desire_armor1;
@@ -602,7 +611,7 @@ typedef struct fb_entvars_s {
 
 	qbool fl_marker;							// true if the current item is considered a marker (used when finding all objects in given radius)
 	//struct gedict_s* next;
-	
+
 	// Goal evaluation
 	struct gedict_s* best_goal;
 	float best_goal_score;
@@ -653,6 +662,7 @@ typedef struct fb_entvars_s {
 	qbool firing;								// does the bot want to attack this frame?
 	qbool jumping;								// does the bot want to jump this frame?
 	int desired_weapon_impulse;					// impulse to send the next time the player
+	int random_desired_weapon_impulse;
 	vec3_t desired_angle;						// for 'perfect' aim, this is where the bot wants to be aiming
 	qbool botchose;								// next_impulse is valid
 	int next_impulse;							// the impulse to send in next command
@@ -944,6 +954,7 @@ typedef struct gedict_s
 	float fIllegalFPSWarnings;
 // ILLEGALFPS]
 
+	qbool leavemealone;
 	float shownick_time;					// used to force centerprint is off at desired time
 	clientType_t ct;						// client type for client edicts
 // { timing
@@ -1052,10 +1063,12 @@ typedef struct gedict_s
 	qbool ca_alive;
 	qbool ca_ready;
 	qbool can_respawn;
+	qbool is_solo;							// is player a one-man team?
 	qbool in_play;							// is player still fighting?
 	qbool in_limbo;							// waiting to respawn during wipeout
 	qbool last_alive_active;				// if last alive timer is active
 	qbool no_pain;							// if player can take any damage to health or armor
+	qbool lj_accepted;						// if late-join request was accepted
 	float ca_round_frags;
 	float ca_round_kills;
 	float ca_round_dmg;
@@ -1067,12 +1080,13 @@ typedef struct gedict_s
 	float ca_round_rldirect;
 	float ca_round_lghit;
 	float ca_round_lgfired;
-	float alive_time;						// number of seconds player is in play
+	float regen_timer;						// when the regen timer is started
 	float time_of_respawn;					// server time player respawned or round started
 	float seconds_to_respawn;				// number of seconds until respawn
 	float escape_time;						// number of seconds after "escaping"
 	char *teamcolor;						// color of player's team
-	char cptext[100];						// centerprint for player
+	char cptext[1024];						// centerprint for player
+	char ljteam[1024];						// team that player is requesting to join
 	int ca_ammo_grenades;					// grenade ammo
 	int tracking_enabled;
 	int round_deaths;						// number of times player has died in the round
@@ -1189,7 +1203,7 @@ typedef struct gedict_s
 	int lgc_distance_hits[LGCMODE_DISTANCE_BUCKETS];
 // }
 
-// { 
+// {
 	// let mvdsv know when player has teleported, and adjust for high-ping
 	int teleported;
 // }
@@ -1228,6 +1242,10 @@ typedef struct gedict_s
 // { trigger_heal
 	float healmax;                          // maximum health see triggers.c for defaults
 	float healtimer;                        // internal timer for tracking health replenishment interval
+// }
+
+// { csqc
+	func_t SendEntity;
 // }
 } gedict_t;
 

@@ -444,6 +444,7 @@ void T_Damage(gedict_t *targ, gedict_t *inflictor, gedict_t *attacker, float dam
 	float native_damage = damage; // save damage before apply any modificator
 	char *attackerteam, *targteam, *attackername, *victimname;
 	qbool tp4teamdmg = false;
+	qbool isWipeout = cvar("k_clan_arena") == 2;
 
 	//midair and instagib
 	float playerheight = 0, midheight = 0;
@@ -460,6 +461,21 @@ void T_Damage(gedict_t *targ, gedict_t *inflictor, gedict_t *attacker, float dam
 	if (!targ->s.v.takedamage || ISDEAD(targ))
 	{
 		return;
+	}
+
+	// don't bounce around players in prewar who wish to be left alone
+	if (match_in_progress != 2 && targ->leavemealone)
+	{
+		if (attacker != targ && ((targ->ct == ctPlayer) && (attacker->ct == ctPlayer)))
+		{
+			return;
+		}
+		else if (dtTELE1 == targ->deathtype	// always do tele damage
+				|| dtTELE2 == targ->deathtype	// always do tele damage
+				|| dtTELE3 == targ->deathtype)	// always do tele damage
+		{
+			// telefrags still work, to avoid getting stuck
+		}
 	}
 
 	// can't damage other players in race
@@ -506,6 +522,19 @@ void T_Damage(gedict_t *targ, gedict_t *inflictor, gedict_t *attacker, float dam
 				}
 	
 				return;
+			}
+		}
+
+		// Wipeout solo players only:
+		// damage was taken, so reset regen timer if one was started
+		if (isWipeout && targ->is_solo && targ->regen_timer && attacker != targ)
+		{
+			// allow a second of forgiveness, otherwise the same fight
+			// that started the timer might also stop it.
+			if (g_globalvars.time - targ->regen_timer > 1.0)
+			{
+				stuffcmd(targ, "play boss2/idle.wav\n");
+				targ->regen_timer = 0;
 			}
 		}
 	}

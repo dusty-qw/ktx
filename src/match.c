@@ -282,6 +282,9 @@ void EndMatch(float skip_log)
 	char *tmp;
 	float f1;
 	qbool is_real_match_end = !isHoonyModeAny() || HM_is_game_over();
+	qbool f_modified_done = false, f_ruleset_done = false, f_version_done = false;
+	char *matchtag = ezinfokey(world, "matchtag");
+	qbool has_matchtag = matchtag != NULL && matchtag[0];
 
 	if (match_over || !match_in_progress)
 	{
@@ -399,6 +402,22 @@ void EndMatch(float skip_log)
 		for (p = world; (p = find_plr(p));)
 		{
 			p->ready = 0; // force players be not ready after match is end.
+
+			if (has_matchtag && cvar("k_on_end_f_modified") && !f_modified_done)
+			{
+				stuffcmd(p, "say f_modified\n");
+				f_modified_done = true;
+			}
+			if (has_matchtag && cvar("k_on_end_f_ruleset") && !f_ruleset_done)
+			{
+				stuffcmd(p, "say f_ruleset\n");
+				f_ruleset_done = true;
+			}
+			if (has_matchtag && cvar("k_on_end_f_version") && !f_version_done)
+			{
+				stuffcmd(p, "say f_version\n");
+				f_version_done = true;
+			}
 		}
 	}
 
@@ -880,9 +899,10 @@ void SM_PrepareMap(void)
 // put clients in server and reset some params
 static void SM_PrepareClients(void)
 {
-	int hdc, i;
+	int hdc, i, j, player_count = 0;
 	char *pl_team;
-	gedict_t *p;
+	gedict_t *p, *temp;
+	gedict_t *players[MAX_CLIENTS];
 	qbool hoonymode_reset = isHoonyModeAny() && HM_current_point() > 0;
 
 	k_teamid = 666;
@@ -890,8 +910,24 @@ static void SM_PrepareClients(void)
 	trap_executecmd(); // <- this really needed
 
 	initial_match_spawns = true;
+
 	for (p = world; (p = find_plr(p));)
 	{
+		players[player_count++] = p;
+		p->leavemealone = false;		// can't have this enabled during match
+	}
+
+	for (i = player_count - 1; i > 0; i--)
+	{
+		j = rand() % (i + 1);
+		temp = players[i];
+		players[i] = players[j];
+		players[j] = temp;
+	}
+
+	for (j = 0; j < player_count; j++)
+	{
+		p = players[j];
 		if (!k_matchLess)
 		{
 			// skip setup k_teamnum in matchLess mode
@@ -1644,11 +1680,12 @@ void PrintCountdown(int seconds)
 
 	if (tot_mode_enabled())
 	{
+		int weapon = FrogbotWeapon();
 		strlcat(text, va("\nTribe of Tjernobyl mode %2s\n", redtext("on")), sizeof(text));
 		strlcat(text, va("Break on death %11s\n",
 			(int)cvar(FB_CVAR_BREAK_ON_DEATH) ? redtext("on") : redtext("off")),
 			sizeof(text));
-		strlcat(text, va("Bot weapon %15s\n", redtext(WpName(FrogbotWeapon()))), sizeof(text));
+		strlcat(text, va("Bot weapon %15s\n", redtext(weapon ? WpName(weapon) : "random")), sizeof(text));
 		strlcat(text, va("Bot health %15s\n", dig3(FrogbotHealth())), sizeof(text));
 		strlcat(text, va("Bot skill %16s\n", dig3(FrogbotSkillLevel())), sizeof(text));
 		strlcat(text, va("Quad damage multiplier %3s\n", dig3(FrogbotQuadMultiplier())), sizeof(text));
@@ -2601,6 +2638,8 @@ void PlayerReady(qbool startIdlebot)
 {
 	gedict_t *p;
 	float nready;
+	char *matchtag = ezinfokey(world, "matchtag");
+	qbool has_matchtag = matchtag != NULL && matchtag[0];
 
 	if (isRACE() && !race_match_mode())
 	{
@@ -2782,6 +2821,21 @@ void PlayerReady(qbool startIdlebot)
 		if (k_attendees && (nready == k_attendees))
 		{
 			G_bprint(2, "All players ready\n");
+		}
+
+		if (has_matchtag && cvar("k_on_start_f_modified"))
+		{
+			stuffcmd(self, "say f_modified\n");
+		}
+
+		if (has_matchtag && cvar("k_on_start_f_ruleset"))
+		{
+			stuffcmd(self, "say f_ruleset\n");
+		}
+
+		if (has_matchtag && cvar("k_on_start_f_version"))
+		{
+			stuffcmd(self, "say f_version\n");
 		}
 
 		G_bprint(2, "Timer started\n");

@@ -377,6 +377,12 @@ void TraceAttack(float damage, vec3_t dir, qbool send_effects)
 		return;
 	}
 
+	//can't touch/damage players who want to be left alone
+	if (PROG_TO_EDICT(g_globalvars.trace_ent)->ct == ctPlayer && PROG_TO_EDICT(g_globalvars.trace_ent)->leavemealone)
+	{
+		return;
+	}
+
 	if (PROG_TO_EDICT(g_globalvars.trace_ent)->s.v.takedamage)
 	{
 		if (PROG_TO_EDICT(g_globalvars.trace_ent)->ct == ctPlayer)
@@ -960,6 +966,11 @@ void T_MissileTouch(void)
 		return;
 	}
 
+	if (other->leavemealone)
+	{
+		return;
+	}
+
 	if (self->voided)
 	{
 		return;
@@ -1104,6 +1115,7 @@ void LightningHit(gedict_t *from, float damage)
 	{
 		WS_Mark(from, wpLG);
 		from->ps.wpn[wpLG].hits++;
+		from->ps.wpn[wpLG].lastfraghits++;
 	}
 
 	WriteByte( MSG_MULTICAST, SVC_TEMPENTITY);
@@ -1230,6 +1242,7 @@ void W_FireLightning(void)
 	WS_Mark(self, wpLG);
 
 	self->ps.wpn[wpLG].attacks++;
+	self->ps.wpn[wpLG].lastfragattacks++;
 
 	if (self->t_width < g_globalvars.time)
 	{
@@ -1317,6 +1330,12 @@ void GrenadeTouch(void)
 
 	// can't touch/damage others in race
 	if (isRACE() && (other->ct == ctPlayer) && (other != PROG_TO_EDICT(self->s.v.owner)))
+	{
+		return;
+	}
+
+	// can't touch players who want to be left alone
+	if (other->leavemealone)
 	{
 		return;
 	}
@@ -1511,6 +1530,12 @@ void spike_touch(void)
 	}
 
 	if (race_ignore_spike(self, other))
+	{
+		return;
+	}
+
+	// can't touch players who want to be left alone
+	if (other->leavemealone)
 	{
 		return;
 	}

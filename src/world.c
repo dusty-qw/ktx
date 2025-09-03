@@ -330,10 +330,7 @@ void SP_worldspawn(void)
 
 	trap_precache_sound("ambience/windfly.wav");
 
-	if (cvar("k_spm_custom_model"))
-	{
-		trap_precache_model("progs/spawn.mdl");
-	}
+	trap_precache_model(Spawn_GetModel());
 
 	trap_precache_model("progs/player.mdl");
 
@@ -798,6 +795,12 @@ void FirstFrame(void)
 	RegisterCvar("k_lock_hdp");
 	RegisterCvar("k_disallow_weapons");
 	RegisterCvar("k_force_mapcycle"); // will use mapcycle even when /deathmatch 0
+	RegisterCvarEx("k_on_start_f_modified", "1");
+	RegisterCvarEx("k_on_start_f_ruleset", "1");
+	RegisterCvarEx("k_on_start_f_version", "1");
+	RegisterCvarEx("k_on_end_f_modified", "1");
+	RegisterCvarEx("k_on_end_f_ruleset", "1");
+	RegisterCvarEx("k_on_end_f_version", "1");
 
 	RegisterCvar("k_pow");
 	RegisterCvarEx("k_pow_q", "1"); // quad
@@ -815,6 +818,7 @@ void FirstFrame(void)
 	RegisterCvar("k_vp_admin");   // votes percentage for admin election
 	RegisterCvar("k_vp_captain"); // votes percentage for captain election
 	RegisterCvar("k_vp_coach");   // votes percentage for coachs election
+	RegisterCvarEx("k_vp_suggestcolor", "51"); // votes percentage for color suggestion election
 	RegisterCvar("k_vp_map");     // votes percentage for map change voting
 	RegisterCvar("k_vp_pickup");  // votes percentage for pickup voting
 	RegisterCvar("k_vp_rpickup"); // votes percentage for rpickup voting
@@ -847,6 +851,8 @@ void FirstFrame(void)
 	RegisterCvar("k_lockmin");
 	RegisterCvar("k_lockmax");
 	RegisterCvar("k_spectalk");
+	RegisterCvarEx("k_allowklist", "1");
+	RegisterCvarEx("k_allowtracklist", "1");
 	RegisterCvarEx("k_keepspectalkindemos", "0");
 	RegisterCvar("k_sayteam_to_spec");
 	RegisterCvar("k_dis");
@@ -869,6 +875,7 @@ void FirstFrame(void)
 	RegisterCvarEx("k_spm_show", "1");
 	RegisterCvarEx("k_spm_glow", "0");
 	RegisterCvarEx("k_spm_custom_model", "0");
+	RegisterCvarEx("k_spm_color_rgba", "1.0 1.0 1.0 1.0");
 	RegisterCvar("k_entityfile");
 // { hoonymode
 	RegisterCvarEx("k_hoonymode", "0");

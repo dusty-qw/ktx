@@ -259,9 +259,11 @@ static void BuildTeamList(void)
 
 void FrogbotsAddbot(int skill_level, const char *specificteam, qbool error_messages)
 {
+	char skill_level_str[3];
 	int i;
 
 	skill_level = bound(MIN_FROGBOT_SKILL, skill_level, MAX_FROGBOT_SKILL);
+	snprintf(skill_level_str, sizeof(skill_level_str), "%d", skill_level);
 
 	for (i = 0; i < sizeof(bots) / sizeof(bots[0]); ++i)
 	{
@@ -335,6 +337,7 @@ void FrogbotsAddbot(int skill_level, const char *specificteam, qbool error_messa
 			G_bprint(2, "skill &cf00%d&r\n", self->fb.skill.skill_level);
 			SetAttribs(&g_edicts[entity], customised_skill);
 			trap_SetBotUserInfo(entity, "k_nick", bots[i].name, 0);
+			trap_SetBotUserInfo(entity, "*skill", skill_level_str, SETUSERINFO_STAR);
 
 			return;
 		}
@@ -2179,8 +2182,8 @@ static void FrogbotsSetWeapon(void)
 
 	if (trap_CmdArgc() <= 2)
 	{
-		G_sprint(self, 2, "Usage: /botcmd  weapon <weapon>\n");
-		G_sprint(self, 2, "       <weapon> must be in range %d and %d\n", 2, 8);
+		G_sprint(self, 2, "Usage: /botcmd  weapon <weapon|random>\n");
+		G_sprint(self, 2, "       <weapon> must be in range 1 to 8 or \"random\"\n");
 		G_sprint(self, 2, "weapon is currently \"%d\"\n", FrogbotWeapon());
 	}
 	else
@@ -2190,12 +2193,15 @@ static void FrogbotsSetWeapon(void)
 		int old_weapon = FrogbotWeapon();
 
 		trap_CmdArgv(2, argument, sizeof(argument));
-		new_weapon = bound(2, atoi(argument), 8);
+		new_weapon = strcmp(argument, "0") == 0 || strcmp(argument, "random") == 0
+			? 0
+			: bound(1, atoi(argument), 8);
 
 		if (new_weapon != old_weapon)
 		{
 			cvar_fset(FB_CVAR_WEAPON, new_weapon);
-			G_sprint(self, 2, "weapon changed to \"%d\"\n", new_weapon);
+			G_sprint(self, 2, "weapon changed to \"%s\"\n",
+				new_weapon ? WpName(new_weapon) : "random");
 		}
 	}
 }
