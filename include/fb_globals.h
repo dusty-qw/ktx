@@ -408,6 +408,7 @@ qbool HasSavedMarker(void);
 #define FB_CVAR_BREAK_ON_DEATH    "k_fb_break_on_death"
 #define FB_CVAR_QUAD_MULTIPLIER   "k_fb_quad_multiplier"
 #define FB_CVAR_ITEM_PICKUP_BONUS "k_fb_item_pickup_bonus"
+#define FB_CVAR_NEW_MOVE_SCALE    "k_fb_new_move_scale"
 
 void BotsFireLogic(void);
 
