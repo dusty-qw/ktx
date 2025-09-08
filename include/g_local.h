@@ -266,6 +266,8 @@ void changeyaw(gedict_t *ent);
 char* va(char *format, ...) PRINTF_FUNC(1);
 char* redtext(char *format);
 char* cleantext(char *format);
+char* dig1(int d);
+char* dig1s(const char *format, ...) PRINTF_FUNC(1);
 char* dig3(int d);
 char* dig3s(const char *format, ...) PRINTF_FUNC(1);
 char* striphigh(char *format);
@@ -1279,3 +1281,11 @@ extern int maxPlayerCount;
 #define AUTOTRACK_POWERUPS_PREDICT_TIME 2
 
 qbool AllowMonster(gedict_t *e);
+
+#define SPAWNICIDE_DISABLED 0
+#define SPAWNICIDE_PREWAR 1
+#define SPAWNICIDE_MATCH 2
+
+int SpawnicideStatus(void);
+void SpawnicideEnable(void);
+void SpawnicideDisable(void);

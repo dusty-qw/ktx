@@ -696,6 +696,11 @@ void Customize_Maps(void)
 		}
 	}
 
+	if (SpawnicideStatus() == SPAWNICIDE_PREWAR)
+	{
+		SpawnicideEnable();
+	}
+
 	if (cvar("k_spm_show"))
 	{
 		ShowSpawnPoints();
@@ -848,6 +853,7 @@ void FirstFrame(void)
 	RegisterCvar("k_overtime");
 	RegisterCvar("k_exttime");
 	RegisterCvar("k_spw");
+	RegisterCvar("k_spawnicide");
 	RegisterCvar("k_lockmin");
 	RegisterCvar("k_lockmax");
 	RegisterCvar("k_spectalk");
@@ -932,6 +938,10 @@ void FirstFrame(void)
 	RegisterCvar("k_demoname_date"); // add date to demo name, value is argument for strftime() function
 	RegisterCvarEx("k_count", "10");
 	RegisterCvar("k_exclusive"); // stores whether players can join when a game is already in progress
+	RegisterCvarEx("k_countdown_message_head", "");
+	RegisterCvarEx("k_countdown_message_body", "");
+	RegisterCvarEx("k_countdown_message_foot", "");
+
 	RegisterCvar("k_lockmode");
 	RegisterCvar("k_short_gib");
 	RegisterCvar("k_ann");
@@ -1008,7 +1018,7 @@ void FirstFrame(void)
 
 	RegisterCvar("k_teamoverlay"); // q3 like team overlay
 
-	RegisterCvar("k_allow_socd_warning"); // socd
+	RegisterCvarEx("k_socd", "1");
 
 // { SP
 	RegisterCvarEx("k_monster_spawn_time", "20");
@@ -1058,6 +1068,8 @@ void FirstFrame(void)
 	RegisterCvarEx(FB_CVAR_WEAPON, "2");
 	RegisterCvarEx(FB_CVAR_BREAK_ON_DEATH, "1");
 	RegisterCvarEx(FB_CVAR_QUAD_MULTIPLIER, "4");
+	RegisterCvarEx(FB_CVAR_ITEM_PICKUP_BONUS, "0");
+	RegisterCvarEx(FB_CVAR_NEW_MOVE_SCALE, "0");
 
 	for (i = 0; i < MAX_CLIENTS; i++)
 	{
@@ -1074,6 +1086,7 @@ void FirstFrame(void)
 
 	RegisterCvar("k_lgcmode");
 	RegisterCvar("k_tot_mode");
+	RegisterCvar("k_kteam_messages");
 
 	// private games
 	RegisterCvarEx("k_privategame", "0");                 // whether it is currently on or off

@@ -3790,6 +3790,7 @@ void PlayerPreThink(void)
 {
 	float r;
 	qbool zeroFps = false;
+	int k_socd = cvar("k_socd");
 
 	if (self->k_timingWarnTime)
 	{
@@ -3863,14 +3864,20 @@ void PlayerPreThink(void)
 		{
 			if (self->fFramePerfectStrafeChangeCount / self->fStrafeChangeCount >= 0.75)
 			{
-				int k_allow_socd_warning = cvar("k_allow_socd_warning");
-
 				self->socdDetectionCount += 1;
-				if ((!match_in_progress) && (!self->isBot) && k_allow_socd_warning && (self->ct == ctPlayer) && (self->socdDetectionCount >= 2))
+				if ((!match_in_progress) && (!self->isBot) && k_socd == SOCD_WARN && (self->ct == ctPlayer) && (self->socdDetectionCount >= 2))
 				{
 					G_bprint(PRINT_HIGH,
 						"[%s] Warning! %s: Movement assistance detected. Please disable iDrive or keyboard strafe assistance features.\n",
 						SOCD_DETECTION_VERSION, self->netname);
+				}
+
+				if ((!self->isBot) && k_socd == SOCD_KICK && (self->ct == ctPlayer) && (self->socdDetectionCount >= 2))
+				{
+					G_bprint(PRINT_HIGH,
+						"[%s] Kicked! %s: Movement assistance detected. Please disable iDrive or keyboard strafe assistance features.\n",
+						SOCD_DETECTION_VERSION, self->netname);
+					stuffcmd(self, "disconnect\n");
 				}
 			}
 
@@ -5084,12 +5091,32 @@ void StatsHandler(gedict_t *targ, gedict_t *attacker)
 		{
 			// team kill
 			attacker->ps.wpn[wp].tkills++;
+
+			if ((items & IT_QUAD))
+			{
+				attacker->ps.itm[itQUAD].tkills++;
+			}
+
+			if ((items & IT_INVISIBILITY))
+			{
+				attacker->ps.itm[itRING].tkills++;
+			}
+
+			if (targ->deathtype == dtLG_DIS)
+			{
+				attacker->ps.discharge_tkills++;
+			}
 		}
 		else
 		{
 			// normal kill
 			attacker->ps.wpn[wp].kills++;
 			targ->ps.wpn[wp].deaths++;
+
+			if (targ->deathtype == dtLG_DIS)
+			{
+				attacker->ps.discharge_ekills++;
+			}
 
 			// hmm, may be add some priority? so if targ have rl and gl bump only wpn[wpRL].ekills ?
 			if ((items & IT_AXE))
@@ -5130,6 +5157,16 @@ void StatsHandler(gedict_t *targ, gedict_t *attacker)
 			if ((items & IT_LIGHTNING))
 			{
 				attacker->ps.wpn[wpLG].ekills++;
+			}
+
+			if ((items & IT_QUAD))
+			{
+				attacker->ps.itm[itQUAD].ekills++;
+			}
+
+			if ((items & IT_INVISIBILITY))
+			{
+				attacker->ps.itm[itRING].ekills++;
 			}
 		}
 	}
@@ -5370,8 +5407,31 @@ void ClientObituary(gedict_t *targ, gedict_t *attacker)
 
 		return;
 	}
-// }
 
+	// can only occur if k_spawnicide is enabled
+	if (dtTELE4 == targ->deathtype)
+	{
+		switch ((int)(g_random() * 3))
+		{
+			case 0:
+				G_bprint(PRINT_MEDIUM,
+					"%s couldn't resist the shiny spawn point\n", victimname);
+				break;
+			case 1:
+				G_bprint(PRINT_MEDIUM,
+					"%s got too close to the baby factory\n", victimname);
+				break;
+			default:
+				G_bprint(PRINT_MEDIUM,
+					"%s was fragged by poor life choices\n", victimname);
+				break;
+		}
+
+		targ->s.v.frags -= 1;
+		logfrag(targ, targ);
+		return;
+	}
+// }
 	if (attacker->ct == ctPlayer) // so, inside this "if" targ and attacker is players
 	{
 		if (targ == attacker)
