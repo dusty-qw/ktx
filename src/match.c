@@ -478,6 +478,11 @@ void EndMatch(float skip_log)
 	{
 		g_matchstarttime = 0;
 	}
+
+	if (SpawnicideStatus() == SPAWNICIDE_MATCH)
+	{
+		SpawnicideDisable();
+	}
 }
 
 void SaveOvertimeStats(void)
@@ -719,7 +724,8 @@ void TimerThink(void)
 			return;
 		}
 
-		G_bprint(2, "\220%s\221 minute%s remaining\n", dig3(self->cnt), count_s(self->cnt));
+		G_bprint(2, "\220%s\221 minute%s remaining\n",
+			cvar("k_kteam_messages") ? dig1(self->cnt) : dig3(self->cnt), count_s(self->cnt));
 
 		self->s.v.nextthink = g_globalvars.time + 1;
 
@@ -732,8 +738,10 @@ void TimerThink(void)
 				if (sc)
 				{
 					G_bprint(2, "%s \220%s\221 leads by %s frag%s\n", redtext("Team"),
-								cvar_string((sc > 0 ? "_k_team1" : "_k_team2")), dig3(abs((int)sc)),
-								count_s(abs((int)sc)));
+						cvar_string((sc > 0 ? "_k_team1" : "_k_team2")),
+						cvar("k_kteam_messages")
+							? dig1(abs((int)sc)) : dig3(abs((int)sc)),
+						count_s(abs((int)sc)));
 				}
 				else
 				{
@@ -761,8 +769,10 @@ void TimerThink(void)
 					}
 
 					G_bprint(2, "%s \220%s\221 leads by %s frag%s\n", redtext("Team"),
-								cvar_string("_k_team1"), dig3(abs((int)sc)),
-								count_s(abs((int)sc)));
+						cvar_string("_k_team1"),
+						cvar("k_kteam_messages")
+							? dig1(abs((int)sc)) : dig3(abs((int)sc)),
+						count_s(abs((int)sc)));
 				}
 				else if ((s2 > s1) && (s2 > s3))
 				{
@@ -777,8 +787,10 @@ void TimerThink(void)
 					}
 
 					G_bprint(2, "%s \220%s\221 leads by %s frag%s\n", redtext("Team"),
-								cvar_string("_k_team2"), dig3(abs((int)sc)),
-								count_s(abs((int)sc)));
+						cvar_string("_k_team2"),
+						cvar("k_kteam_messages")
+							? dig1(abs((int)sc)) : dig3(abs((int)sc)),
+						count_s(abs((int)sc)));
 				}
 				else if ((s3 > s1) && (s3 > s2))
 				{
@@ -793,8 +805,10 @@ void TimerThink(void)
 					}
 
 					G_bprint(2, "%s \220%s\221 leads by %s frag%s\n", redtext("Team"),
-								cvar_string("_k_team3"), dig3(abs((int)sc)),
-								count_s(abs((int)sc)));
+						cvar_string("_k_team3"),
+						cvar("k_kteam_messages")
+							? dig1(abs((int)sc)) : dig3(abs((int)sc)),
+						count_s(abs((int)sc)));
 				}
 				else
 				{
@@ -808,7 +822,8 @@ void TimerThink(void)
 
 	if ((self->cnt == 1) && ((self->cnt2 == 30) || (self->cnt2 == 15) || (self->cnt2 <= 10)))
 	{
-		G_bprint(2, "\220%s\221 second%s\n", dig3(self->cnt2), count_s(self->cnt2));
+		G_bprint(2, "\220%s\221 second%s\n",
+			cvar("k_kteam_messages") ? dig1(self->cnt2) : dig3(self->cnt2), count_s(self->cnt2));
 	}
 
 	self->s.v.nextthink = g_globalvars.time + 1;
@@ -864,22 +879,74 @@ void SM_PrepareMap(void)
 
 		if (deathmatch >= 4)
 		{
-			if (streq(p->classname, "weapon_nailgun") || streq(p->classname, "weapon_supernailgun")
-					|| streq(p->classname, "weapon_supershotgun")
-					|| streq(p->classname, "weapon_rocketlauncher")
-					|| streq(p->classname, "weapon_grenadelauncher")
-					|| streq(p->classname, "weapon_lightning"))
-			{ // no weapons for any of this deathmatches (4 or 5)
+			int disallowed_weapons = (int)cvar("k_disallow_weapons") & DA_WPNS;
+
+			// no weapons for any of this deathmatches (4 or 5),
+			// unless ToT mode with item pickup bonus is enabled and
+			// the weapon isn't disallowed.
+			if (streq(p->classname, "weapon_nailgun"))
+			{
+				soft_ent_remove(p);
+				continue;
+			}
+			else if (streq(p->classname, "weapon_supernailgun"))
+			{
+				soft_ent_remove(p);
+				continue;
+			}
+			else if (streq(p->classname, "weapon_supershotgun"))
+			{
+				soft_ent_remove(p);
+				continue;
+			}
+			else if (streq(p->classname, "weapon_grenadelauncher"))
+			{
+				soft_ent_remove(p);
+				continue;
+			}
+			else if (streq(p->classname, "weapon_rocketlauncher") &&
+				!FrogbotItemPickupBonus() &&
+				(disallowed_weapons & IT_ROCKET_LAUNCHER))
+			{
+				soft_ent_remove(p);
+				continue;
+			}
+			else if (streq(p->classname, "weapon_lightning") &&
+				!FrogbotItemPickupBonus() &&
+				(disallowed_weapons & IT_LIGHTNING))
+			{
 				soft_ent_remove(p);
 				continue;
 			}
 
 			if (deathmatch == 4)
 			{
-				if (streq(p->classname, "item_shells") || streq(p->classname, "item_spikes")
-						|| streq(p->classname, "item_rockets") || streq(p->classname, "item_cells")
-						|| (streq(p->classname, "item_health") && ((int)p->s.v.spawnflags & H_MEGA)))
-				{ // no weapon ammo and megahealth for dmm4
+				// no weapon ammo and megahealth for dmm4
+				if (streq(p->classname, "item_shells"))
+				{
+					soft_ent_remove(p);
+					continue;
+				}
+				else if (streq(p->classname, "item_spikes"))
+				{
+					soft_ent_remove(p);
+					continue;
+				}
+				else if (streq(p->classname, "item_rockets") &&
+					!FrogbotItemPickupBonus())
+				{
+					soft_ent_remove(p);
+					continue;
+				}
+				else if (streq(p->classname, "item_cells"))
+				{
+					soft_ent_remove(p);
+					continue;
+				}
+				else if ((streq(p->classname, "item_health") &&
+					((int)p->s.v.spawnflags & H_MEGA)) &&
+					!FrogbotItemPickupBonus())
+				{
 					soft_ent_remove(p);
 					continue;
 				}
@@ -1181,6 +1248,15 @@ void StartMatch(void)
 
 	HideSpawnPoints();
 
+	if (SpawnicideStatus() == SPAWNICIDE_MATCH)
+	{
+		SpawnicideEnable();
+	}
+	else
+	{
+		SpawnicideDisable();
+	}
+
 	match_start_time = g_globalvars.time;
 	g_matchstarttime = (int)(g_globalvars.time * 1000);
 	match_in_progress = 2;
@@ -1231,7 +1307,8 @@ void StartMatch(void)
 
 		if (!k_matchLess || cvar("k_matchless_countdown"))
 		{
-			G_bprint(2, "%s\n", redtext("The match has begun!"));
+			G_bprint(2, "%s\n", cvar("k_kteam_messages")
+				? "The match has begun!" : redtext("The match has begun!"));
 		}
 	}
 
@@ -1422,8 +1499,35 @@ void PrintCountdown(int seconds)
 	char *ot = "";
 	char *nowp = "";
 	char *matchtag = redtext(ezinfokey(world, "matchtag"));
+	qbool haveHead, haveBody, haveFoot;
+	int k_socd = cvar("k_socd");
 
 	strlcat(text, va("%s: %2s\n\n\n", redtext("Countdown"), dig3(seconds)), sizeof(text));
+
+	haveHead = strlen(cvar_string("k_countdown_message_head"));
+	haveBody = strlen(cvar_string("k_countdown_message_body"));
+	haveFoot = strlen(cvar_string("k_countdown_message_foot"));
+	if (seconds > 10 && (haveHead || haveBody || haveFoot))
+	{
+		if (haveHead)
+		{
+			strlcat(text, va("%s\n\n", cvar_string("k_countdown_message_head")),
+				sizeof(text));
+		}
+		if (haveBody)
+		{
+			strlcat(text, va("%s\n\n", cvar_string("k_countdown_message_body")),
+				sizeof(text));
+		}
+		if (haveFoot)
+		{
+			strlcat(text, va("%s\n\n", cvar_string("k_countdown_message_foot")),
+				sizeof(text));
+		}
+
+		goto print;
+	}
+
 
 //	if (matchtag[0]) {
 //		strlcat(text, va("matchtag %s\n\n\n", matchtag), sizeof(text));
@@ -1662,6 +1766,17 @@ void PrintCountdown(int seconds)
 		strlcat(text, va("%s %4s\n", "Powerups", redtext(Get_PowerupsStr())), sizeof(text));
 	}
 
+	if (SpawnicideStatus() == SPAWNICIDE_MATCH)
+	{
+		strlcat(text, va("Spawnicide %s\n", redtext("on")), sizeof(text));
+	}
+
+	strlcat(text, va("%s %6s\n", SOCD_DETECTION_VERSION,
+		k_socd == SOCD_ALLOW ? redtext("allow")
+		: k_socd == SOCD_STATS ? redtext("stats")
+		: k_socd == SOCD_WARN ? redtext("warn")
+		: redtext("kick")), sizeof(text));
+
 	if (cvar("k_dmgfrags"))
 	{
 		strlcat(text, va("%s %4s\n", "Dmgfrags", redtext("on")), sizeof(text));
@@ -1714,6 +1829,9 @@ void PrintCountdown(int seconds)
 		strlcat(text, va("Bot health %15s\n", dig3(FrogbotHealth())), sizeof(text));
 		strlcat(text, va("Bot skill %16s\n", dig3(FrogbotSkillLevel())), sizeof(text));
 		strlcat(text, va("Quad damage multiplier %3s\n", dig3(FrogbotQuadMultiplier())), sizeof(text));
+		strlcat(text, va("Item Pickup Bonus %8s\n",
+			redtext(FrogbotItemPickupBonus() ? "on": "off")), sizeof(text));
+
 	}
 
 	if (matchtag[0])
@@ -1725,6 +1843,7 @@ void PrintCountdown(int seconds)
 		strlcat(text, "\nno matchtag\n\n\n", sizeof(text));
 	}
 
+print:
 	G_cp2all("%s", text);
 }
 

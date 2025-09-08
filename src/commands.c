@@ -130,6 +130,7 @@ void ToggleQPoint(void);
  */
 void ToggleRespawns(void);
 void ToggleSpawnPoints(void);
+void ToggleSpawnicide(void);
 void ToggleBerzerk(void);
 void ToggleSpecTalk(void);
 void ToggleSpeed(void);
@@ -275,6 +276,7 @@ void giveme(void);
 static void dropitem(void);
 static void removeitem(void);
 static void dumpent(void);
+static void socd(void);
 // }
 
 // { Frogbots
@@ -352,6 +354,7 @@ const char CD_NODESC[] = "no desc";
 #define CD_WHOVOTE			"info on received votes"
 #define CD_SPAWN			"toggle spawn modes"
 #define CD_SPAWNPOINTS		"toggle visible spawn points"
+#define CD_SPAWNICIDE			"toggle spawnicide"
 #define CD_POWERUPS			"quad, \230\230\230, ring & suit"
 #define CD_PUPICKUP			"change powerups pickup policy"
 #define CD_ANTILAG			"toggle antilag"
@@ -662,6 +665,7 @@ const char CD_NODESC[] = "no desc";
 #define CD_DROPITEM			(CD_NODESC) // skip
 #define CD_REMOVEITEM		(CD_NODESC) // skip
 #define CD_DUMPENT			(CD_NODESC) // skip
+#define CD_SOCD			"cycle between SOCD detection modes"
 
 #define CD_VOTECOOP			"vote for coop on/off"
 #define CD_COOPNMPU			"new nightmare mode (pu drops) on/off"
@@ -716,6 +720,7 @@ cmd_t cmds[] =
 	{ "whovote", 					ModStatusVote, 					0, 			CF_BOTH | CF_MATCHLESS, 												CD_WHOVOTE },
 	{ "spawn", 						ToggleRespawns, 				0, 			CF_PLAYER | CF_SPC_ADMIN, 												CD_SPAWN },
 	{ "spawn_show", 				ToggleSpawnPoints, 				0, 			CF_PLAYER | CF_SPC_ADMIN, 												CD_SPAWNPOINTS },
+	{ "spawnicide", 				ToggleSpawnicide, 				0, 			CF_PLAYER | CF_SPC_ADMIN, 												CD_SPAWNICIDE },
 	{ "powerups", 					TogglePowerups, 				0, 			CF_PLAYER | CF_SPC_ADMIN | CF_PARAMS, 									CD_POWERUPS },
 	{ "powerups_pickup", 			TogglePuPickup, 				0, 			CF_PLAYER | CF_SPC_ADMIN | CF_PARAMS, 									CD_PUPICKUP },
 	{ "antilag", 					antilag, 						0, 			CF_PLAYER | CF_SPC_ADMIN, 												CD_ANTILAG },
@@ -1038,6 +1043,7 @@ cmd_t cmds[] =
 	{ "dropitem", 					dropitem, 						0, 			CF_BOTH | CF_PARAMS, 													CD_DROPITEM },
 	{ "removeitem", 				removeitem, 					0, 			CF_BOTH | CF_PARAMS, 													CD_REMOVEITEM },
 	{ "dumpent", 					dumpent, 						0, 			CF_BOTH | CF_PARAMS, 													CD_DUMPENT },
+	{ "socd", 					socd, 							0, 			CF_PLAYER,														CD_SOCD },
 	{ "votecoop", 					votecoop, 						0, 			CF_PLAYER | CF_MATCHLESS, 												CD_VOTECOOP },
 	{ "coop_nm_pu", 				ToggleNewCoopNm, 				0, 			CF_PLAYER | CF_MATCHLESS, 												CD_COOPNMPU },
 	{ "demomark", 					DemoMark, 						0, 			CF_BOTH, 																CD_DEMOMARK },
@@ -2702,6 +2708,48 @@ void ToggleSpawnPoints(void)
 	}
 }
 
+void ToggleSpawnicide(void)
+{
+	int spawnicide = cvar("k_spawnicide");
+
+	if (match_in_progress)
+	{
+		return;
+	}
+
+	spawnicide++;
+	if (spawnicide > SPAWNICIDE_MATCH)
+	{
+		spawnicide = SPAWNICIDE_DISABLED;
+	}
+
+	cvar_set("k_spawnicide", va("%d", spawnicide));
+
+	// We are using the show spawn point code to display teleporter exit
+	// spawns as well, so to trigger it we need to reset it.
+	if (cvar("k_spm_show"))
+	{
+		HideSpawnPoints();
+		ShowSpawnPoints();
+	}
+
+	SpawnicideDisable();
+
+	switch (spawnicide)
+	{
+		case SPAWNICIDE_DISABLED:
+			G_sprint(self, 2, "Spawnicide %s\n", redtext("off"));
+			break;
+		case SPAWNICIDE_PREWAR:
+			SpawnicideEnable();
+			G_sprint(self, 2, "Spawnicide %s\n", redtext("prewar"));
+			break;
+		case SPAWNICIDE_MATCH:
+			G_sprint(self, 2, "Spawnicide %s\n", redtext("match"));
+			break;
+	}
+}
+
 void TogglePowerups(void)
 {
 	char arg[64];
@@ -3380,8 +3428,9 @@ void PrintScores(void)
 		}
 
 		// we can't use dig3 here because of zero padding, so using dig3s
-		G_sprint(self, 2, "\220%s:%s\221 remaining\n", dig3s("%02d", minutes),
-					dig3s("%02d", seconds));
+		G_sprint(self, 2, "\220%s:%s\221 remaining\n",
+			cvar("k_kteam_messages") ? dig1s("%02d", minutes) : dig3s("%02d", minutes),
+			cvar("k_kteam_messages") ? dig1s("%02d", seconds) : dig3s("%02d", seconds));
 	}
 
 	if (k_showscores)
@@ -5360,7 +5409,7 @@ void latejoin(void)
 	}
 	
 	// Store the requested team for later use
-	snprintf(self->ljteam, sizeof(self->ljteam), arg_2);
+	snprintf(self->ljteam, sizeof(self->ljteam), "%s", arg_2);
 	//self->ljteam = arg_2;
 	
 	// Start the election
@@ -9349,6 +9398,40 @@ static void dumpent(void)
 	trap_FS_CloseFile(file_handle);
 
 	G_sprint(self, 2, "Dumped %d entities\n", cnt);
+}
+
+static void socd(void)
+{
+	int k_socd;
+
+	if (match_in_progress)
+	{
+		return;
+	}
+
+	k_socd = cvar("k_socd") + 1;
+	if (k_socd < SOCD_ALLOW || k_socd > SOCD_KICK)
+	{
+		k_socd = SOCD_ALLOW;
+	}
+
+	switch (k_socd)
+	{
+		case SOCD_ALLOW:
+			G_bprint(2, "%s: allow\n", redtext("SOCD"));
+			break;
+		case SOCD_STATS:
+			G_bprint(2, "%s: stats after game\n", redtext("SOCD"));
+			break;
+		case SOCD_WARN:
+			G_bprint(2, "%s: warn on violation\n", redtext("SOCD"));
+			break;
+		case SOCD_KICK:
+			G_bprint(2, "%s: kick on violation\n", redtext("SOCD"));
+			break;
+	}
+
+	cvar_set("k_socd", va("%d", (int)k_socd));
 }
 
 qbool lgc_enabled(void)
