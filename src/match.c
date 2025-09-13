@@ -2039,11 +2039,14 @@ void standby_think(void)
 					setnowep(p);
 				}
 
-				p->s.v.takedamage = 0;
-				p->s.v.solid = 0;
-				p->s.v.movetype = 0;
-				p->s.v.modelindex = 0;
-				p->model = "";
+                p->s.v.takedamage = 0;
+                p->s.v.solid = 0;
+                p->s.v.movetype = 0;
+                p->s.v.modelindex = 0;
+                p->model = "";
+				
+                // Relink after solid change to keep area lists consistent
+                setorigin(p, PASSVEC3(p->s.v.origin));
 			}
 		}
 	}
@@ -2569,12 +2572,15 @@ void StopTimer(int removeDemo)
 
 		for (p = world; (p = find_plr(p));)
 		{
-			setfullwep(p);
+            setfullwep(p);
 
-			p->s.v.takedamage = DAMAGE_AIM;
-			p->s.v.solid = SOLID_SLIDEBOX;
-			p->s.v.movetype = MOVETYPE_WALK;
-			setmodel(p, "progs/player.mdl");
+            p->s.v.takedamage = DAMAGE_AIM;
+            p->s.v.solid = SOLID_SLIDEBOX;
+            p->s.v.movetype = MOVETYPE_WALK;
+            setmodel(p, "progs/player.mdl");
+
+            // Relink after solid change so players are returned to the correct list
+            setorigin(p, PASSVEC3(p->s.v.origin));
 		}
 	}
 
