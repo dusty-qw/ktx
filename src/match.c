@@ -905,15 +905,15 @@ void SM_PrepareMap(void)
 				continue;
 			}
 			else if (streq(p->classname, "weapon_rocketlauncher") &&
-				!FrogbotItemPickupBonus() &&
-				(disallowed_weapons & IT_ROCKET_LAUNCHER))
+				(!FrogbotItemPickupBonus() ||
+				(disallowed_weapons & IT_ROCKET_LAUNCHER)))
 			{
 				soft_ent_remove(p);
 				continue;
 			}
 			else if (streq(p->classname, "weapon_lightning") &&
-				!FrogbotItemPickupBonus() &&
-				(disallowed_weapons & IT_LIGHTNING))
+				(!FrogbotItemPickupBonus() ||
+				(disallowed_weapons & IT_LIGHTNING)))
 			{
 				soft_ent_remove(p);
 				continue;
