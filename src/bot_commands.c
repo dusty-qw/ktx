@@ -2706,6 +2706,8 @@ void BotStartFrame(void)
 					{
 						p->fb.oldsolid = p->s.v.solid;
 						p->s.v.solid = SOLID_NOT;
+						// Relink after solid change to avoid stale area list state
+						setorigin(p, PASSVEC3(p->s.v.origin));
 					}
 
 					AvoidHazards(self);
@@ -2714,6 +2716,8 @@ void BotStartFrame(void)
 					for (p = world; (p = find_plr(p));)
 					{
 						p->s.v.solid = p->fb.oldsolid;
+						// Relink after restoring solidity
+						setorigin(p, PASSVEC3(p->s.v.origin));
 					}
 				}
 

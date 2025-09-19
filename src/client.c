@@ -683,6 +683,9 @@ static void intermission_set_player_flags(gedict_t *player)
 
 	// KTEAMS: make players invisible
 	player->model = "";
+
+	// Relink after solid change to keep area lists consistent during intermission
+    setorigin(player, PASSVEC3(player->s.v.origin));
 }
 
 void execute_changelevel(void)
