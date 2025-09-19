@@ -981,7 +981,6 @@ static void SM_PrepareClients(void)
 	for (p = world; (p = find_plr(p));)
 	{
 		players[player_count++] = p;
-		p->leavemealone = false;		// can't have this enabled during match
 		p->socdDetectionCount = 0;
 		p->socdValidationCount = 0;
 		p->fStrafeChangeCount = 0;
@@ -992,6 +991,19 @@ static void SM_PrepareClients(void)
 		p->totalStrafeChangeCount = 0;
 		p->totalPerfectStrafeCount = 0;
 		p->nullStrafeCount = 0;
+
+		// reset leavemealone before match
+        if (p->leavemealone)
+        {
+            p->leavemealone = false;
+
+            // If they were a trigger, restore normal solidity and relink
+            if (p->s.v.solid == SOLID_TRIGGER)
+            {
+                p->s.v.solid = SOLID_SLIDEBOX;
+                setorigin(p, PASSVEC3(p->s.v.origin));
+            }
+        }
 	}
 
 	for (i = player_count - 1; i > 0; i--)
