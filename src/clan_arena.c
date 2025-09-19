@@ -662,6 +662,9 @@ void CA_PutClientInServer(void)
 
 		setmodel(self, "");
 
+		// Relink after changing solid to ensure correct area list placement
+		setorigin(self, PASSVEC3(self->s.v.origin));
+
 		if (!self->in_limbo || ca_round_pause)
 		{
 			// Change color to white if dead or not playing

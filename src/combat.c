@@ -1266,13 +1266,19 @@ void T_RadiusDamage(gedict_t *inflictor, gedict_t *attacker, float damage, gedic
 	gedict_t *head;
 
 	if (isRACE())
-	{
-		attacker->s.v.solid = SOLID_BBOX;
-		T_RadiusDamageApply(inflictor, attacker, attacker, damage, dtype);
-		attacker->s.v.solid = SOLID_NOT;
+    {
+        attacker->s.v.solid = SOLID_BBOX;
+        // Relink after solid change to ensure area lists reflect new solidity
+        setorigin(attacker, PASSVEC3(attacker->s.v.origin));
 
+        T_RadiusDamageApply(inflictor, attacker, attacker, damage, dtype);
+
+        attacker->s.v.solid = SOLID_NOT;
+		// Relink after restoring solidity
+        setorigin(attacker, PASSVEC3(attacker->s.v.origin));
+        
 		return;
-	}
+    }
 
 	head = trap_findradius(world, inflictor->s.v.origin, damage + 40);
 
