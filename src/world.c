@@ -785,6 +785,7 @@ void FirstFrame(void)
 	RegisterCvar("_k_nospecs");  // internal usage, will reject spectators connection
 
 	RegisterCvar("k_noitems");
+	RegisterCvarEx("k_leavemealone", "1");
 
 	RegisterCvar("k_random_maplist"); // select random map from k_ml_XXX variables.
 
