@@ -4143,6 +4143,12 @@ ok:
 
 void LeaveMeAlone(void)
 {
+	if (!cvar("k_leavemealone"))
+	{
+		G_sprint(self, 2, "%s is not enabled on this server\n", redtext("leavemealone"));
+		return;
+	}
+
 	if (match_in_progress)
 	{
 		return;
