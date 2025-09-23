@@ -1853,7 +1853,7 @@ void PrintCountdown(int seconds)
 
 	if (CountBots() >= 1)
 	{
-		strlcat(text, va("Bot Skill Mode %11s\n",
+		strlcat(text, va("\nBot Skill Mode %s\n",
 				redtext(FrogbotEasySkillMode() ? "easy" : "default")), sizeof(text));
 	}
 
