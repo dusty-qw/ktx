@@ -786,6 +786,7 @@ void FirstFrame(void)
 
 	RegisterCvar("k_noitems");
 	RegisterCvarEx("k_leavemealone", "1");
+	RegisterCvarEx("k_pausewithoutmatchtag", "0");
 
 	RegisterCvar("k_random_maplist"); // select random map from k_ml_XXX variables.
 
