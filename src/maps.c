@@ -692,3 +692,8 @@ char* SelectMapInCycle(char *buf, int buf_size)
 
 	return buf;
 }
+
+qbool IsE1M2Practice(void)
+{
+	return k_practice && streq(mapname, "e1m2");
+}
