@@ -2036,6 +2036,10 @@ void ModStatus2(void)
 
 	switch ((int)cvar("k_prewar"))
 	{
+		case 3:
+			ot = "players may damage and frag before match";
+			break;
+
 		case 1:
 			ot = "players may fire before match";
 			break;
