@@ -2650,16 +2650,10 @@ void info_kf_update(gedict_t *p, char *from, char *to)
 
 void cl_refresh_plus_scores(gedict_t *p)
 {
-	gedict_t *swp;
-
 	if (((p->ct == ctPlayer) || (p->ct == ctSpec)) && p->sc_stats)
 	{
-		swp = self; // save self
-		self = p;
-
-		Sc_Stats(2); // force refresh
-
-		self = swp; // restore self
+		p->sc_stats = 1;
+		p->sc_stats_time = g_globalvars.time; // force refresh asap
 	}
 }
 
