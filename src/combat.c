@@ -484,29 +484,10 @@ void T_Damage(gedict_t *targ, gedict_t *inflictor, gedict_t *attacker, float dam
 			{
 				tp4teamdmg = true;
 			}
-			else if (targ->leavemealone)
-			{
-				return;
-			}
 		}
 		else
 		{
 			return;
-		}
-	}
-
-	// don't bounce around players in prewar who wish to be left alone
-	if ((match_in_progress != 2) && !prewar_fight && targ->leavemealone)
-	{
-		if (attacker != targ && ((targ->ct == ctPlayer) && (attacker->ct == ctPlayer)))
-		{
-			return;
-		}
-		else if (dtTELE1 == targ->deathtype	// always do tele damage
-				|| dtTELE2 == targ->deathtype	// always do tele damage
-				|| dtTELE3 == targ->deathtype)	// always do tele damage
-		{
-			// telefrags still work, to avoid getting stuck
 		}
 	}
 
@@ -1291,14 +1272,10 @@ void T_RadiusDamage(gedict_t *inflictor, gedict_t *attacker, float damage, gedic
 	if (isRACE())
     {
         attacker->s.v.solid = SOLID_BBOX;
-        // Relink after solid change to ensure area lists reflect new solidity
-        setorigin(attacker, PASSVEC3(attacker->s.v.origin));
 
         T_RadiusDamageApply(inflictor, attacker, attacker, damage, dtype);
 
         attacker->s.v.solid = SOLID_NOT;
-		// Relink after restoring solidity
-        setorigin(attacker, PASSVEC3(attacker->s.v.origin));
         
 		return;
     }
