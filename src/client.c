@@ -170,9 +170,6 @@ void CheckTiming(void)
                     p->s.v.solid = 0;
                     p->s.v.movetype = 0;
                     SetVector(p->s.v.velocity, 0, 0, 0); // speed is zeroed and not restored
-					
-                    // Relink after solid change to avoid stale area list membership
-                    setorigin(p, PASSVEC3(p->s.v.origin));
                 }
 			}
 
@@ -683,9 +680,6 @@ static void intermission_set_player_flags(gedict_t *player)
 
 	// KTEAMS: make players invisible
 	player->model = "";
-
-	// Relink after solid change to keep area lists consistent during intermission
-    setorigin(player, PASSVEC3(player->s.v.origin));
 }
 
 void execute_changelevel(void)
@@ -1713,7 +1707,7 @@ void ClientConnect(void)
 		SendIntermissionToClient();
 	}
 
-	// SOCD
+// SOCD
 	self->socdValidationCount = 0;
 	self->socdDetectionCount = 0;
 	self->fStrafeChangeCount = 0;
@@ -1810,7 +1804,7 @@ void PutClientInServer(void)
 	self->classname = "player";
 	self->s.v.health = 100;
 	self->s.v.takedamage = DAMAGE_AIM;
-	self->s.v.solid = isCA() ? SOLID_NOT : self->leavemealone ? SOLID_TRIGGER : SOLID_SLIDEBOX;
+	self->s.v.solid = isCA() ? SOLID_NOT : SOLID_SLIDEBOX;
 	self->s.v.movetype = MOVETYPE_WALK;
 	self->show_hostile = 0;
 	self->s.v.max_health = 100;
@@ -2049,7 +2043,7 @@ void PutClientInServer(void)
 		}
 		else
 		{
-			self->s.v.solid = self->leavemealone ? SOLID_TRIGGER : SOLID_SLIDEBOX;
+			self->s.v.solid = SOLID_SLIDEBOX;
 		}
 		setorigin(self, PASSVEC3(self->s.v.origin));
 
@@ -3076,9 +3070,6 @@ void BackFromLag(void)
         self->s.v.takedamage = self->k_timingTakedmg;
         self->s.v.solid = self->k_timingSolid;
         self->s.v.movetype = self->k_timingMovetype;
-
-        // Relink after solid change to ensure proper area list placement
-        setorigin(self, PASSVEC3(self->s.v.origin));
     }
 }
 
@@ -3730,14 +3721,15 @@ void PlayerPreThink(void)
 			if (self->fFramePerfectStrafeChangeCount / self->fStrafeChangeCount >= 0.75)
 			{
 				self->socdDetectionCount += 1;
-				if ((!match_in_progress) && (!self->isBot) && k_socd == SOCD_WARN && (self->ct == ctPlayer) && (self->socdDetectionCount >= 2))
+
+				if ((!match_in_progress) && (!self->isBot) && k_socd == SOCD_WARN && (self->ct == ctPlayer) && (self->socdDetectionCount >= 3))
 				{
 					G_bprint(PRINT_HIGH,
 						"[%s] Warning! %s: Movement assistance detected. Please disable iDrive or keyboard strafe assistance features.\n",
 						SOCD_DETECTION_VERSION, self->netname);
 				}
 
-				if ((!self->isBot) && k_socd == SOCD_KICK && (self->ct == ctPlayer) && (self->socdDetectionCount >= 2))
+				if ((!self->isBot) && k_socd == SOCD_KICK && (self->ct == ctPlayer) && (self->socdDetectionCount >= 3))
 				{
 					G_bprint(PRINT_HIGH,
 						"[%s] Kicked! %s: Movement assistance detected. Please disable iDrive or keyboard strafe assistance features.\n",
@@ -3891,16 +3883,6 @@ void PlayerPreThink(void)
 	CA_player_pre_think();
 
 	race_player_pre_think();
-
-	if (self->leavemealone)
-	{
-		if ((self->s.v.mins[0] == 0) || (self->s.v.mins[1] == 0))
-		{
-			// This can happen if the world 'squashes' a SOLID_NOT entity, mvdsv will turn into corpse
-			setsize(self, PASSVEC3(VEC_HULL_MIN), PASSVEC3(VEC_HULL_MAX));
-		}
-		setorigin(self, PASSVEC3(self->s.v.origin));
-	}	
 
 // brokenankle included here
 	if (self->s.v.button2 || self->brokenankle)
@@ -5783,8 +5765,8 @@ qbool PlayerCanPause(gedict_t *p)
 	qbool playerCanPause = false;
 	char *matchtag = ezinfokey(world, "matchtag");
 
-	// Check for matchtag, OR allow if k_pausewithoutmatchtag is set.
-	if (cvar("k_pausewithoutmatchtag") || ((matchtag != NULL) && matchtag[0]))
+	// Check for matchtag, OR allow if k_pause_without_matchtag is set.
+	if (cvar("k_pause_without_matchtag") || ((matchtag != NULL) && matchtag[0]))
 	{
 		// Let's see if the player can still pause.
 		if (p->k_pauseRequests > 0)
