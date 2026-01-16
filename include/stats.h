@@ -78,6 +78,8 @@ const char* GetMode(void);
 char* ItName(itemName_t it);
 void S2di(fileHandle_t file_handle, const char *fmt, ...) PRINTF_FUNC(2);
 void MatchEndStatsTables(void);
+void LastStatsJsonSave(void);
+qbool LastStatsJsonPrint(gedict_t *ed);
 
 
 #endif // STATS_H

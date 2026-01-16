@@ -3566,7 +3566,18 @@ void LastStats(void)
 		return;
 	}
 
-	MatchEndStatsTables();
+	if (LastStatsJsonPrint(self))
+	{
+		return;
+	}
+
+	if (lastStatsData)
+	{
+		MatchEndStatsTables();
+		return;
+	}
+
+	G_sprint(self, 2, "Laststats data empty\n");
 }
 
 // This player statistics is triggered by the ingame /stats command. Nothing to do with the endgame stats.

@@ -201,6 +201,8 @@ typedef enum
 	lsRACE
 } lsType_t; // lastscores type
 
+#define LASTSTATS_FILENAME "laststats.json"
+
 // Spike:
 // Extension builtins.
 // The order of these don't matter (qqshka: what about QVM builds? look g_syscalls.asm, we need something similar for extensions I guess),

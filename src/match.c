@@ -18,6 +18,7 @@
  */
 
 #include "g_local.h"
+#include "stats.h"
 
 void NextLevel(void);
 void IdlebotForceStart(void);
@@ -370,6 +371,10 @@ void EndMatch(float skip_log)
 				MatchEndStats();
 			}
 
+			if (lastStatsData)
+			{
+				LastStatsJsonSave();
+			}
 			lastscore_add(); // save game result somewhere, so we can show it later
 		}
 	}
