@@ -640,16 +640,19 @@ void antilag_lagmove_all_proj(gedict_t *owner, gedict_t *e)
 
 			self = oself;
 			antilag_unmove_all(); // emergency antilag cleanup
+			if (HAVEEXTENSION(G_SETLASTRUNTIME))
+				trap_SetLastRuntime(NUM_FOR_EDICT(e));
 			return;
 		}
 	}
 	//
 
 	// actual stepping through
-	while (current_time <= g_globalvars.time)
+	while (current_time < g_globalvars.time)
 	{
+		float remaining = g_globalvars.time - current_time;
 		time_corrected = current_time;
-		step_time = bound(0.01, min(step_time, (g_globalvars.time - current_time) - 0.01), 0.05);
+		step_time = remaining < 0.01f ? remaining : bound(0.01, min(step_time, remaining - 0.01), 0.05);
 		if (e->s.v.nextthink) { e->s.v.nextthink -= step_time; }
 
 		//antilag_lagmove_all_nohold(owner, (g_globalvars.time - current_time), false);
@@ -680,6 +683,8 @@ void antilag_lagmove_all_proj(gedict_t *owner, gedict_t *e)
 
 	// restore origins to held values
 	antilag_unmove_all();
+	if (HAVEEXTENSION(G_SETLASTRUNTIME))
+		trap_SetLastRuntime(NUM_FOR_EDICT(e));
 	time_corrected = g_globalvars.time;
 }
 
@@ -754,8 +759,9 @@ void antilag_lagmove_all_proj_bounce(gedict_t *owner, gedict_t *e)
 	// actual step through
 	while (current_time < g_globalvars.time)
 	{
-		step_time = bound(0.01, min(step_time, (g_globalvars.time - current_time) - 0.01), 0.05);
-		
+		float remaining = g_globalvars.time - current_time;
+		step_time = remaining < 0.01f ? remaining : bound(0.01f, min(step_time, remaining - 0.01f), 0.05f);
+
 		antilag_lagmove_all_playeronly(owner, (g_globalvars.time - current_time));
 		Physics_Bounce(step_time);
 		if (self->s.v.nextthink) { self->s.v.nextthink -= step_time; }
@@ -767,6 +773,8 @@ void antilag_lagmove_all_proj_bounce(gedict_t *owner, gedict_t *e)
 
 	// restore origins to held values
 	antilag_unmove_all();
+	if (HAVEEXTENSION(G_SETLASTRUNTIME))
+		trap_SetLastRuntime(NUM_FOR_EDICT(e));
 }
 
 
