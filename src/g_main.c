@@ -691,6 +691,7 @@ static qbool G_InitExtensions(void)
 		{"setsendneeded",		G_SETSENDNEEDED},
 		{"sprayclear",			G_SPRAYCLEAR},
 		{"sprayclearall",		G_SPRAYCLEARALL},
+		{"SetLastRuntime",		G_SETLASTRUNTIME},
 	};
 	int i;
 	for (i = 0; i < sizeof(exttraps)/sizeof(exttraps[0]); i++)
