@@ -222,6 +222,8 @@ enum
 	G_SETEXTFIELDPTR,
 	G_GETEXTFIELDPTR,
 	G_SETSENDNEEDED,
+	G_SPRAYCLEAR = G_EXTENSIONS_FIRST + 14,
+	G_SPRAYCLEARALL,
 	G_EXTENSIONS_LAST
 };
 extern qbool haveextensiontab[G_EXTENSIONS_LAST-G_EXTENSIONS_FIRST];
@@ -245,6 +247,11 @@ float g_random(void);
 float crandom(void);
 int i_rnd(int from, int to);
 float dist_random(float minValue, float maxValue, float spreadFactor);
+void KTX_SpraysClearAll(void);
+void KTX_SpraysClearPlayer(gedict_t *player);
+void KTX_SpraysForgetPlayer(gedict_t *player);
+qbool KTX_CanSpray(void);
+void KTX_SprayPlaced(int spray_id);
 float next_frame(void);
 gedict_t* spawn(void);
 void ent_remove(gedict_t *t);
@@ -854,6 +861,7 @@ void vote_check_all(void);
 #define OV_HOOKCRHOOK (VOTE_FOFS ( hookcrhook ) )
 #define OV_ANTILAG ( VOTE_FOFS ( antilag ) )
 #define OV_PRIVATE ( VOTE_FOFS ( privategame ) )
+#define OV_NOSPRAY ( VOTE_FOFS ( nospray ) )
 //#define OV_KICKUNAUTHED ( VOTE_FOFS (kick_unauthed) )
 #define OV_SWAPALL ( VOTE_FOFS ( swapall ) )
 #define MAX_RPICKUP_RECUSION 3
@@ -889,6 +897,7 @@ void ra_out_que(gedict_t *p);
 qbool ra_isin_que(gedict_t *p);
 int ra_pos_que(gedict_t *p);
 qbool isRA(void); // not game mode, but just modificator of duel
+qbool RA_CanSpray(void);
 qbool isWinner(gedict_t *p);
 qbool isLoser(gedict_t *p);
 gedict_t* getWinner(void);
@@ -911,6 +920,7 @@ void ra_break(void);
 // clan_arena.c
 
 qbool isCA(void);
+qbool CA_CanSpray(void);
 qbool CA_CheckAlive(gedict_t *p);
 int CA_wins_required(void);
 int CA_count_ready_players(void);
@@ -1287,6 +1297,21 @@ qbool AllowMonster(gedict_t *e);
 #define SPAWN_SHOW_DISABLED 0
 #define SPAWN_SHOW_PREWAR 1
 #define SPAWN_SHOW_MATCH 2
+
+/**
+ * Stores the score state used to evaluate golden-frag overtime.
+ *
+ * The snapshot represents the score difference at the moment golden-frag
+ * tracking starts or is refreshed. A later score difference can be compared
+ * against this snapshot to determine whether a frag changed the lead enough
+ * to end the match.
+ */
+typedef struct {
+	int team1_score;
+	int team2_score;
+} golden_frag_score_snapshot_t;
+
+extern golden_frag_score_snapshot_t golden_frag_score_snapshot;
 
 #define SPAWNICIDE_DISABLED 0
 #define SPAWNICIDE_PREWAR 1

@@ -47,6 +47,7 @@ void VoteCaptain(void);
 void VoteCoach(void);
 void SuggestColorVote(void);
 void nospecs(void);
+void nospray(void);
 void teamoverlay(void);
 void votecoop(void);
 void RandomPickup(void);
@@ -658,6 +659,7 @@ const char CD_NODESC[] = "no desc";
 // }
 
 #define CD_NOSPECS			"allow/disallow spectators"
+#define CD_NOSPRAY			"allow/disallow sprays during match"
 #define CD_NOITEMS			"allow/disallow items in game"
 #define CD_TEAMOVERLAY		"allow/disallow teamoverlay"
 
@@ -1038,6 +1040,7 @@ cmd_t cmds[] =
 	{ "race_hide_players", 			race_hide_players_toggle, 		0, 			CF_PLAYER, 																CD_RHIDEPLAYERS },
 	// }
 	{ "nospecs", 					nospecs, 						0, 			CF_PLAYER | CF_SPC_ADMIN, 												CD_NOSPECS },
+	{ "nospray", 					nospray, 						0, 			CF_PLAYER | CF_SPC_ADMIN, 												CD_NOSPRAY },
 	{ "noitems", 					noitems, 						0, 			CF_PLAYER | CF_SPC_ADMIN, 												CD_NOITEMS },
 	{ "teamoverlay", 				teamoverlay, 					0, 			CF_PLAYER | CF_SPC_ADMIN, 												CD_TEAMOVERLAY },
 	{ "spawn666time", 				Spawn666Time, 					0, 			CF_PLAYER | CF_SPC_ADMIN | CF_PARAMS, 									CD_SPAWN666TIME },
@@ -1737,7 +1740,7 @@ void ChangeOvertime(void)
 		return;
 	}
 
-	f1 = bound(0, cvar("k_overtime"), 3);
+	f1 = bound(0, cvar("k_overtime"), 4);
 	f2 = bound(0, cvar("k_exttime"), 999);
 
 	if (!f1)
@@ -1763,6 +1766,11 @@ void ChangeOvertime(void)
 		G_bprint(2, "%s: tie-break\n", redtext("Overtime"));
 	}
 	else if (f1 == 3)
+	{
+		cvar_fset("k_overtime", SD_GOLDEN_FRAG);
+		G_bprint(2, "%s: golden frag\n", redtext("Overtime"));
+	}
+	else if (f1 == SD_GOLDEN_FRAG)
 	{
 		cvar_fset("k_overtime", 0);
 		G_bprint(2, "%s: off\n", redtext("Overtime"));
@@ -2007,6 +2015,10 @@ void ModStatus2(void)
 			ot = va("%d tie-break", tiecount());
 			break;
 
+		case SD_GOLDEN_FRAG:
+			ot = va("golden frag");
+			break;
+
 		default:
 			ot = "unknown";
 			break;
@@ -2226,6 +2238,25 @@ void ModStatusVote(void)
 			for (p = world; (p = find_client(p));)
 			{
 				if (p->v.nospecs)
+				{
+					G_sprint(self, 2, " %s\n", p->netname);
+				}
+			}
+		}
+	}
+
+	if (!match_in_progress)
+	{
+		if ((votes = get_votes(OV_NOSPRAY)))
+		{
+			voted = true;
+
+			G_sprint(self, 2, "\220%d/%d\221 vote%s for a %s mode change:\n", votes,
+						get_votes_req(OV_NOSPRAY, false), count_s(votes), redtext("nospray"));
+
+			for (p = world; (p = find_client(p));)
+			{
+				if (p->v.nospray)
 				{
 					G_sprint(self, 2, " %s\n", p->netname);
 				}
@@ -4478,6 +4509,7 @@ const char wipeout_um_init[] =
 	"k_clan_arena 2\n"				// enable wipeout
 	"k_clan_arena_rounds 9\n"		// number of rounds in a series
 	"k_clan_arena_max_respawns 4\n"	// number of respawns per round
+	"k_player_spray_limit 5\n"		// per-player visible spray limit
 	"coop 0\n"						// no coop
 	"dp 0\n"						// don't drop packs
 	"teamplay 4\n"
@@ -4503,6 +4535,7 @@ const char carena_um_init[] =
 	"k_clan_arena 1\n"				// enable clan arena
 	"k_clan_arena_rounds 9\n"		// number of rounds in a series
 	"k_clan_arena_max_respawns 0\n"	// number of respawns per round
+	"k_player_spray_limit 5\n"		// per-player visible spray limit
 	"dp 0\n"						// don't drop packs
 	"teamplay 4\n"
 	"deathmatch 5\n"

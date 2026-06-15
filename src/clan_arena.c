@@ -336,6 +336,25 @@ qbool isCA(void)
 	return (isTeam() && cvar("k_clan_arena"));
 }
 
+qbool CA_CanSpray(void)
+{
+	// Prewar uses the general KTX spray policy. CA's in_play and round-pause
+	// checks only apply once a match is active.
+	if (!match_in_progress)
+	{
+		return true;
+	}
+
+	// Players must be in play (not dead or unready)
+	if (!self->ca_ready || !self->in_play)
+	{
+		return false;
+	}
+
+	// During match, sprays are only allowed between rounds
+	return ca_round_pause != 0;
+}
+
 // Used to determine value of ca_alive when PutClientInServer() is called
 qbool CA_CheckAlive(gedict_t *p)
 {
