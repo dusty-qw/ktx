@@ -111,3 +111,17 @@ jobs:
           compression-level: 9
           name: ${{ format('qwprogs{0}-{1}', contains(env.BRANCH_NAME, 'non-antilag') && format('-{0}', env.BRANCH_NAME) || '', matrix.target) }}
           path: build/${{ matrix.target }}/qwprogs${{ matrix.ext }}
+
+  verify-no-bot-support:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: ammaraskar/gcc-problem-matcher@0.3.0
+
+      - name: Build
+        run: |
+          cmake -B builddir -S . -DBOT_SUPPORT=OFF
+          cmake --build builddir --config Release --parallel
