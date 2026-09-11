@@ -4914,9 +4914,8 @@ void PlayerPostThink(void)
 		self->client_predflags = PRDFL_FORCEOFF;
 	else if ((match_in_progress == 1) || !can_prewar(true))
 		self->client_predflags = PRDFL_FORCEOFF;
-	// disable LG prediction in prewar when underwater to avoid weird shit
-	else if ((match_in_progress != 2)
-			&& (self->s.v.weapon == IT_LIGHTNING)
+	// disable LG prediction when underwater to avoid weird shit
+	else if ((self->s.v.weapon == IT_LIGHTNING)
 			&& (self->s.v.waterlevel > 1))
 		self->client_predflags = PRDFL_FORCEOFF;
 
