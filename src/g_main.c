@@ -677,7 +677,6 @@ static qbool G_InitExtensions(void)
 		{"SetExtField",			G_SETEXTFIELD},
 		{"GetExtField",			G_GETEXTFIELD},
 		{"setsendneeded",		G_SETSENDNEEDED},
-		#ifdef FTESV
 		{"ChangeLevelHub",		G_CHANGELEVEL_HUB},
 		{"URI_Query",			G_URI_QUERY},
 		{"particleeffectnum",	G_PARTICLEEFFECTNUM},
@@ -685,7 +684,6 @@ static qbool G_InitExtensions(void)
 		{"pointparticles",		G_POINTPARTICLES},
 		{"clientstat",			G_CLIENTSTAT},
 		{"pointerstat",			G_POINTERSTAT},
-		#endif
 		{"MapExtFieldPtr",		G_MAPEXTFIELDPTR},
 		{"SetExtFieldPtr",		G_SETEXTFIELDPTR},
 		{"GetExtFieldPtr",		G_GETEXTFIELDPTR},

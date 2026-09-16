@@ -1,6 +1,7 @@
 /*
- * Whether we are predicting at all, and the two pieces of per-frame state every
- * other module asks about: where the player was, and whether they are in play.
+ * Whether we are predicting at all, and the per-frame state the other modules
+ * ask about: where the player was, whether they are in play, and the gravity
+ * their grenades fall under.
  */
 
 float Pred_Enabled(void)
@@ -65,6 +66,19 @@ float Pred_ServerAllows(float predflags)
 		return FALSE;
 
 	return TRUE;
+}
+
+/*
+ * The server republishes its gravity as a stat, because the movevars the client
+ * was sent at connect are not reachable from here. A server too old to publish
+ * it leaves the stat at zero, which is not a gravity any server runs, so zero
+ * doubles as "not published" and we keep the stock value.
+ */
+void Pred_UpdateGravity(void)
+{
+	float g = getstatf(STAT_KTX_GRAVITY);
+
+	sv_gravity = g ? g : DEFAULT_GRAVITY;
 }
 
 // ==========================================================================

@@ -84,6 +84,17 @@ enumflags
 // temp entity number we peek at
 const float TE_LIGHTNING2	= 6;
 
+/*
+ * Stats the mod publishes. The engine reserves 0..31 for itself and hands mods
+ * 32..127; keep these in step with include/g_local.h.
+ *
+ * Gravity has to come this way. The client is told the server's movevars when
+ * it connects, but no builtin surfaces them to us, so the mod republishes the
+ * one value the grenade simulation needs.
+ */
+const float STAT_KTX_GRAVITY	= 32;
+const float DEFAULT_GRAVITY		= 800;
+
 // the one usercmd button the weapon state machine cares about
 const float BUTTON_ATTACK	= 1;
 

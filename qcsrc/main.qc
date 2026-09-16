@@ -22,17 +22,7 @@ void CSQC_Init(float apilevel, string enginename, float engineversion)
 	// It doubles as the entity the predicted bolt traces with; see Beam_Draw.
 	viewweapon.dimension_hit = TRACE_WORLD_ONLY;
 
-	sv_gravity = 800;
-}
-
-void CSQC_WorldLoaded(void)
-{
-	// KTX publishes this because some maps change it and csqc cannot otherwise
-	// see the server's movevars.
-	sv_gravity = serverkeyfloat("sv_gravity", 800);
-
-	if (autocvar_cl_predict_debug)
-		print(sprintf("csqc: gravity %g\n", sv_gravity));
+	sv_gravity = DEFAULT_GRAVITY;
 }
 
 void CSQC_Shutdown(void)
@@ -97,6 +87,7 @@ void CSQC_UpdateView(float vwidth, float vheight, float notmenu)
 	setproperty(VF_DRAWENGINESBAR, TRUE);
 	setproperty(VF_DRAWCROSSHAIR, TRUE);
 
+	Pred_UpdateGravity();
 	Pred_RecordOrigin();
 
 	// Coming back into play: every prediction we hold belongs to the life that
