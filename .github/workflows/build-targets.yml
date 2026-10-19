@@ -112,6 +112,20 @@ jobs:
           name: ${{ format('qwprogs{0}-{1}', contains(env.BRANCH_NAME, 'non-antilag') && format('-{0}', env.BRANCH_NAME) || '', matrix.target) }}
           path: build/${{ matrix.target }}/qwprogs${{ matrix.ext }}
 
+  verify-macos:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: ammaraskar/gcc-problem-matcher@0.3.0
+
+      - name: Build
+        run: |
+          cmake -B builddir -S . -G Xcode -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -DSANITIZE=ON
+          cmake --build builddir --config Release --parallel
+
   verify-no-bot-support:
     runs-on: ubuntu-latest
     timeout-minutes: 10
