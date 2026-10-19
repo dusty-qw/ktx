@@ -1077,7 +1077,8 @@ void FirstFrame(void)
 	RegisterCvarEx(FB_CVAR_QUAD_MULTIPLIER, "4");
 	RegisterCvarEx(FB_CVAR_ITEM_PICKUP_BONUS, "0");
 	RegisterCvarEx(FB_CVAR_NEW_MOVE_SCALE, "0");
-	RegisterCvarEx(FB_CVAR_EASY_SKILL_MODE, "0");
+	RegisterCvarEx(FB_CVAR_EASY_SKILL_MODE, "1");
+	RegisterCvarEx(FB_CVAR_EXIT_INTERMISSION, "0");
 
 	for (i = 0; i < MAX_CLIENTS; i++)
 	{

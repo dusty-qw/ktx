@@ -380,6 +380,7 @@ int FrogbotQuadMultiplier(void);
 qbool FrogbotItemPickupBonus(void);
 qbool FrogbotEasySkillMode(void);
 qbool FrogbotBreakOnDeath(void);
+qbool FrogbotExitIntermission(void);
 
 // botthink.qc
 void SetMarker(gedict_t *client, gedict_t *marker);
@@ -422,6 +423,7 @@ qbool HasSavedMarker(void);
 #define FB_CVAR_ITEM_PICKUP_BONUS "k_fb_item_pickup_bonus"
 #define FB_CVAR_NEW_MOVE_SCALE    "k_fb_new_move_scale"
 #define FB_CVAR_EASY_SKILL_MODE   "k_fb_easy_skill_mode"
+#define FB_CVAR_EXIT_INTERMISSION "k_fb_exit_intermission"
 
 void BotsFireLogic(void);
 
