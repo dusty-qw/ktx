@@ -100,7 +100,7 @@ jobs:
 
           git clone https://github.com/ec-/q3lcc.git q3lcc
           cd q3lcc
-          make -j $(nproc) PLATFORM=$(uname -s) ARCH=$(uname -m)
+          make -j $(nproc) PLATFORM=$(uname -s) ARCH=$(uname -m) LCC_CFLAGS="-O2 -Wall -fno-strict-aliasing -MMD -std=gnu89"
           sudo mv build*/q3lcc build*/q3rcc build*/q3cpp /usr/local/bin
           cd ..
 
