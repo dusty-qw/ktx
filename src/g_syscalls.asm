@@ -107,9 +107,8 @@ equ		trap_movetogoal -93
 
 equ		trap_VisibleTo -94
 
-equ		trap_SetExtField       -256
-equ		trap_GetExtField       -257
-equ		trap_SetSendNeeded     -258
+equ		trap_SetExtField       -257
+equ		trap_GetExtField       -258
 equ		trap_changelevelHub    -259
 equ		trap_URI_Query         -260
 equ		trap_particleeffectnum -261
@@ -120,8 +119,10 @@ equ		trap_pointerstat       -265
 equ		trap_MapExtFieldPtr    -266
 equ		trap_SetExtFieldPtr    -267
 equ		trap_GetExtFieldPtr    -268
-equ		trap_SetLastRuntime    -269
-equ		trap_SprayClear        -270
-equ		trap_SprayClearAll     -271
+equ		trap_SetSendNeeded     -269
+equ		trap_SetLastRuntime    -270
+equ		trap_SprayClear        -271
+equ		trap_SprayClearAll     -272
 
 equ		trap_ClientReliableCheckBlock -273
+equ		trap_railtrail         -274
