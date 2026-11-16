@@ -156,8 +156,12 @@ endif()
 
 # Build the client-side QuakeC the server hands to CSQC-capable clients. This
 # needs fteqcc from FTE, which most people will not have, so it is optional:
-# without it the server still builds and simply serves no csprogs.
-find_program(FTEQCC NAMES fteqcc fteqcc64)
+# without it the server still builds and simply serves no csprogs. Prefer the
+# binary shipped in qcsrc/ so a distro package of an older fteqcc (which cannot
+# parse progs.src) never shadows it; HINTS is searched before PATH.
+find_program(FTEQCC NAMES fteqcc fteqcc64
+	HINTS "${CMAKE_CURRENT_SOURCE_DIR}/qcsrc"
+	)
 if(FTEQCC)
 	add_custom_target(csprogs ALL
 		COMMAND ${FTEQCC} -srcfile progs.src -O2 -Wall
