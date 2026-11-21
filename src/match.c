@@ -1609,7 +1609,11 @@ void PrintCountdown(int seconds)
 	}
 	else if (isCA())
 	{
-		if (cvar("k_clan_arena") == 2)
+		if (isWipeoutX())
+		{
+			mode = redtext("WipeoutX");
+		}
+		else if (isWipeout())
 		{
 			mode = redtext("Wipeout");	
 		}
@@ -1923,6 +1927,11 @@ qbool isCanStart(gedict_t *s, qbool forceMembersWarn)
 	int nready;
 	char *txt = "";
 	gedict_t *p;
+
+	if (isWipeoutX())
+	{
+		k_membercount = max(2, k_membercount);
+	}
 
 	// no limits in RA
 	if (isRA())
@@ -2268,6 +2277,10 @@ char* CompilateDemoName(void)
 		if (cvar("k_clan_arena") == 1)
 		{
 			strlcat(demoname, "ca", sizeof(demoname));
+		}
+		else if (isWipeoutX())
+		{
+			strlcat(demoname, "wipeoutx", sizeof(demoname));
 		}
 		else
 		{

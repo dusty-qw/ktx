@@ -243,6 +243,12 @@ void Killed(gedict_t *targ, gedict_t *attacker, gedict_t *inflictor)
 {
 	gedict_t *oself;
 
+	// CA/Wipeout: Resolve the final death before callbacks or later targets can deal damage.
+	if (isCA() && targ->ct == ctPlayer)
+	{
+		CA_PlayerDied(targ, attacker);
+	}
+
 #ifdef BOT_SUPPORT
 	BotPlayerKilledEvent(targ, attacker, inflictor);
 #endif
@@ -441,6 +447,27 @@ gedict_t *damage_attacker, *damage_inflictor;
 
 static int dmg_is_splash = 0;
 
+static qbool IsWeaponDamage(deathType_t type)
+{
+	// Exclude telefrags, suicides, and map hazards from weapon damage modifiers.
+	switch (type)
+	{
+		case dtAXE:
+		case dtSG:
+		case dtSSG:
+		case dtNG:
+		case dtSNG:
+		case dtGL:
+		case dtRL:
+		case dtLG_BEAM:
+		case dtLG_DIS:
+		case dtLG_DIS_SELF:
+			return true;
+		default:
+			return false;
+	}
+}
+
 void T_Damage(gedict_t *targ, gedict_t *inflictor, gedict_t *attacker, float damage)
 {
 	vec3_t dir;
@@ -453,7 +480,7 @@ void T_Damage(gedict_t *targ, gedict_t *inflictor, gedict_t *attacker, float dam
 	float native_damage = damage; // save damage before apply any modificator
 	char *attackerteam, *targteam, *attackername, *victimname;
 	qbool tp4teamdmg = false;
-	qbool isWipeout = cvar("k_clan_arena") == 2;
+	qbool wipeout = isWipeout();
 	int k_prewar_mode = (int)cvar("k_prewar");
 	qbool prewar_fight = ((match_in_progress != 2) && (k_prewar_mode == 3));
 
@@ -502,6 +529,8 @@ void T_Damage(gedict_t *targ, gedict_t *inflictor, gedict_t *attacker, float dam
 
 	if (isCA())
 	{
+		qbool round_won = CA_RoundWon();
+
 		if (dtWATER_DMG == targ->deathtype		// No drowning in CA
 				|| dtFALL == targ->deathtype)	// No fall damage in CA
 		{
@@ -519,10 +548,10 @@ void T_Damage(gedict_t *targ, gedict_t *inflictor, gedict_t *attacker, float dam
 			}
 		}
 		
-		// don't accept any damage in CA modes if no_pain is true 
-		if ((targ->no_pain || (attacker->no_pain && attacker->in_play)) && (match_in_progress == 2))
+		// Protect immediately after the winning kill, as well as during spawn/pause.
+		if ((round_won || targ->no_pain || (attacker->no_pain && attacker->in_play)) && (match_in_progress == 2))
 		{	
-			if (attacker == targ)
+			if (attacker == targ && !(round_won && targ->deathtype == dtSUICIDE))
 			{
 				tp4teamdmg = true; // don't take damage but still get stopped/bounced by weapon fire
 			}
@@ -540,7 +569,7 @@ void T_Damage(gedict_t *targ, gedict_t *inflictor, gedict_t *attacker, float dam
 
 		// Wipeout solo players only:
 		// damage was taken, so reset regen timer if one was started
-		if (isWipeout && targ->is_solo && targ->regen_timer && attacker != targ)
+		if (wipeout && targ->is_solo && targ->regen_timer && attacker != targ)
 		{
 			// allow a second of forgiveness, otherwise the same fight
 			// that started the timer might also stop it.
@@ -638,6 +667,13 @@ void T_Damage(gedict_t *targ, gedict_t *inflictor, gedict_t *attacker, float dam
 
 	non_hdp_damage = damage; // save damage before handicap apply for kickback calculation
 
+	// Carrier weapons deal 65% damage to health/armor, preserving full knockback.
+	if (isWipeoutX() && match_in_progress == 2 && attacker->ct == ctPlayer
+		&& (attacker->ctf_flag & CTF_FLAG) && IsWeaponDamage(targ->deathtype))
+	{
+		damage *= 0.65f;
+	}
+
 	// #handicap#
 	if (attacker != targ) // attack no self
 	{
@@ -645,11 +681,7 @@ void T_Damage(gedict_t *targ, gedict_t *inflictor, gedict_t *attacker, float dam
 		{
 			if ((hdp = GetHandicap(attacker)) != 100) // skip checks if hdp == 100
 			{
-				if ((dtAXE == targ->deathtype) || (dtSG == targ->deathtype) || (dtSSG == targ->deathtype)
-						|| (dtNG == targ->deathtype) || (dtSNG == targ->deathtype)
-						|| (dtGL == targ->deathtype) || (dtRL == targ->deathtype)
-						|| (dtLG_BEAM == targ->deathtype) || (dtLG_DIS == targ->deathtype)
-						|| (dtLG_DIS_SELF == targ->deathtype)) // even that impossible
+				if (IsWeaponDamage(targ->deathtype))
 				{
 					damage *= 0.01f * hdp;
 				}

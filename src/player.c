@@ -1305,6 +1305,11 @@ void PlayerDie(void)
 
 	DropPowerups();
 
+	if (isWipeoutX())
+	{
+		PlayerDropFlag(self, false);
+	}
+
 	if (isCTF())
 	{
 		if (self->hook_out)

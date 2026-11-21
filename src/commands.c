@@ -534,7 +534,7 @@ const char CD_NODESC[] = "no desc";
 #define CD_POS_VELOCITY		"set position velocity"
 #define CD_SH_SPEED			"toggle use show speed"
 #define CD_TOSSRUNE			"drop rune (CTF)"
-#define CD_TOSSFLAG			"drop flag (CTF)"
+#define CD_TOSSFLAG			"toss carried flag (CTF/Wipeout X)"
 #define CD_FLAGSTATUS		"show flags status (CTF)"
 #define CD_NOHOOK			"toggle hook (CTF)"
 #define CD_HOOKSMOOTH			"switch Hook style settings: Smooth Hook (CTF)"
@@ -588,6 +588,7 @@ const char CD_NODESC[] = "no desc";
 // { Clan Arena
 #define CD_CARENA			"toggle clan arena"
 #define CD_WIPEOUT			"toggle wipeout"
+#define CD_WIPEOUTX			"toggle Wipeout X"
 // }
 // { ToT
 #define CD_TOT				"toggle Tribe of Tjernobyl mode"
@@ -833,6 +834,7 @@ cmd_t cmds[] =
 	{ "wipeout", 					DEF(UserMode), 					15, 		CF_PLAYER | CF_SPC_ADMIN | CF_PARAMS, 									CD_WIPEOUT },
 	{ "carena", 					DEF(UserMode), 					16, 		CF_PLAYER | CF_SPC_ADMIN | CF_PARAMS, 									CD_CARENA },
 	{ "tot", 					DEF(UserMode), 					17, 		CF_PLAYER | CF_SPC_ADMIN | CF_PARAMS, 									CD_TOT },
+	{ "wipeoutx", 				DEF(UserMode), 					18, 		CF_PLAYER | CF_SPC_ADMIN | CF_PARAMS, 									CD_WIPEOUTX },
 
 	{ "practice", 					TogglePractice, 				0, 			CF_PLAYER | CF_SPC_ADMIN, 												CD_PRACTICE },
 	{ "wp_reset", 					Wp_Reset, 						0, 			CF_PLAYER, 																CD_WP_RESET },
@@ -4531,6 +4533,32 @@ const char wipeout_um_init[] =
 	"k_mode 2\n"
 ;
 
+const char wipeoutx_um_init[] =
+	"k_clan_arena 3\n"				// enable Wipeout X (inherits Wipeout rules until extended)
+	"k_clan_arena_rounds 9\n"		// number of rounds in a series
+	"k_clan_arena_max_respawns 4\n"	// number of respawns per round
+	"k_player_spray_limit 5\n"		// per-player visible spray limit
+	"coop 0\n"						// no coop
+	"dp 0\n"						// don't drop packs
+	"teamplay 4\n"
+	"deathmatch 5\n"
+	"timelimit 0\n"					// no time limit
+	"maxclients 8\n"				// no more than 8 players in ca/wipeout
+	"k_maxclients 8\n"				// no more than 8 players in ca/wipeout
+	"k_pow 0\n"
+	"k_overtime 0\n"
+	"k_spectalk 1\n"				// enable spec talk by default
+	"k_exttime 0\n"					// zero overtime length
+	"k_spw 1\n"						// KT Safety spawns (important for CA)
+	"k_dmgfrags 1\n"				// 1 "frag" for every 100 damage dealt
+	"k_teamoverlay 1\n"				// enable teamoverlay by default
+	"k_membercount 2\n"				// minimum number of players in each team
+	"k_noitems 1\n"					// no items on the map
+	"k_lockmin 1\n"					// minimum number of teams
+	"k_lockmax 2\n"					// maximum number of teams
+	"k_mode 2\n"
+;
+
 const char carena_um_init[] =
 	"k_clan_arena 1\n"				// enable clan arena
 	"k_clan_arena_rounds 9\n"		// number of rounds in a series
@@ -4599,6 +4627,7 @@ usermode um_list[] =
 	{ "wipeout", 	"Wipeout", 				wipeout_um_init, 	UM_4ON4,	 0 },
 	{ "ca", 		"Clan Arena", 			carena_um_init, 	UM_4ON4,	 0 },
 	{ "tot", 		"Tribe of Tjernobyl", 			tot_um_init, 	UM_FFA,	 0 },
+	{ "wipeoutx", "Wipeout X", 			wipeoutx_um_init, UM_4ON4,	 0 },
 };
 
 int um_cnt = sizeof(um_list) / sizeof(um_list[0]);
@@ -6825,6 +6854,9 @@ char* lastscores2str(lsType_t lst)
 		case lsWO:
 			return "Wipeout";
 
+		case lsWOX:
+			return "Wipeout X";
+
 		case lsHM:
 			return "HoonyMode";
 
@@ -6917,7 +6949,7 @@ void lastscore_add(void)
 		qbool isCa = isCA();
 		if (isCa)
 		{
-			lst = cvar("k_clan_arena") == 2 ? lsWO : lsCA;
+			lst = isWipeoutX() ? lsWOX : (isWipeout() ? lsWO : lsCA);
 		}
 		else if (isTeam())
 		{
@@ -9590,6 +9622,7 @@ void ListGameModes(void)
 		"arena",
 		"carena",
 		"wipeout",
+		"wipeoutx",
 		"yawnmode",
 		"totmode",
 	};

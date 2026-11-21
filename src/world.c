@@ -215,6 +215,7 @@ void SP_worldspawn(void)
 
 // player precaches     
 	W_Precache();		// get weapon precaches
+	WOX_Precache(); // allow switching to Wipeout X without a map reload
 	WPredict_Initialize();
 
 // sounds used from C physics code
@@ -991,7 +992,7 @@ void FirstFrame(void)
 	RegisterCvar("k_dmgfrags");
 	RegisterCvar("k_tp_tele_death");
 // { Clan Arena
-	RegisterCvarEx("k_clan_arena", "0");
+	RegisterCvarEx("k_clan_arena", "0"); // 0: off, 1: Clan Arena, 2: Wipeout, 3: Wipeout X
 	RegisterCvarEx("k_clan_arena_rounds", "9");
 	RegisterCvarEx("k_clan_arena_max_respawns", "0");
 // }
@@ -1528,6 +1529,11 @@ void SetMode4ServerInfo(void)
 		if (cvar("k_clan_arena") == 2)
 		{
 			strlcat(mode, "-wo", sizeof(mode));
+		}
+
+		if (isWipeoutX())
+		{
+			strlcat(mode, "-wox", sizeof(mode));
 		}
 
 		if (isRA())

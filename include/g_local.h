@@ -184,7 +184,11 @@ typedef enum
 	um2on2on2,
 	um3on3on3,
 	um4on4on4,
-	umXonX
+	umXonX,
+	umWipeout,
+	umCA,
+	umTot,
+	umWipeoutX
 } UserModes_t;
 
 typedef enum
@@ -198,7 +202,8 @@ typedef enum
 	lsCA,
 	lsWO,
 	lsHM,
-	lsRACE
+	lsRACE,
+	lsWOX
 } lsType_t; // lastscores type
 
 // Spike:
@@ -604,11 +609,14 @@ extern int impulse;
 float W_BestWeapon(void);
 void W_Precache(void);
 void W_SetCurrentAmmo(void);
+void W_UpdateCurrentAmmo(gedict_t *p);
+void W_RefreshUnlimitedAmmo(gedict_t *p, qbool include_gl);
 void SpawnBlood(vec3_t, float);
 void SpawnMeatSpray(vec3_t org, vec3_t vel);
 void W_FireAxe(void);
 void W_FireSpikes(float ox);
 void W_FireLightning(void);
+void W_SetGrenadeVelocity(gedict_t *projectile, gedict_t *player, float r1, float r2);
 void LightningDamage(vec3_t p1, vec3_t p2, gedict_t *from, float damage);
 qbool W_CanSwitch(int wp, qbool warn);
 
@@ -945,6 +953,8 @@ void ra_break(void);
 // clan_arena.c
 
 qbool isCA(void);
+qbool isWipeout(void); // Shared Wipeout/Wipeout X behavior (modes 2 and 3).
+qbool isWipeoutX(void); // Wipeout X-specific behavior (mode 3).
 qbool CA_CanSpray(void);
 qbool CA_CheckAlive(gedict_t *p);
 int CA_wins_required(void);
@@ -953,6 +963,8 @@ int CA_get_score_1(void);
 int CA_get_score_2(void);
 void SM_PrepareCA(void);
 void CA_ClientObituary(gedict_t *targ, gedict_t *attacker);
+void CA_PlayerDied(gedict_t *p, gedict_t *attacker);
+qbool CA_RoundWon(void);
 void CA_MatchBreak(void);
 void CA_PrintScores(void);
 void CA_TeamsStats(void);
@@ -962,6 +974,17 @@ void CA_Frame(void);
 void CA_PutClientInServer(void);
 void CA_AddLatePlayer(gedict_t *p, char *team);
 qbool CA_can_fire(gedict_t *p);
+int calc_respawn_time(gedict_t *p, int offset);
+
+// wipeoutx.c
+void WOX_Precache(void);
+void WOX_StartRound(void);
+void WOX_ResetFlag(void);
+void WOX_PlayerDropFlag(gedict_t *p, qbool tossed);
+void WOX_RefreshCarrierAmmo(gedict_t *p);
+int WOX_PlayerDied(gedict_t *p, gedict_t *attacker);
+qbool WOX_RespawnPenalty(gedict_t *p);
+int WOX_CheckRound(void);
 
 // captain.c
 

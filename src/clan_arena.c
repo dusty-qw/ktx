@@ -57,6 +57,7 @@ static wipeout_map_spawns wipeout_spawn_configs[] = {
 static int round_num;
 static int team1_score;
 static int team2_score;
+static int ca_round_winner;
 static int pause_count;
 static int pause_time;
 static int round_time;
@@ -150,14 +151,30 @@ int CA_get_score_2(void)
 	return team2_score;
 }
 
+static qbool CA_HasRespawnsRemaining(gedict_t *p, int offset)
+{
+	return (isWipeoutX() || p->round_deaths + offset <= cvar("k_clan_arena_max_respawns"));
+}
+
 int calc_respawn_time(gedict_t *p, int offset)
 {
-	qbool isWipeout = (cvar("k_clan_arena") == 2);
-	int max_deaths = cvar("k_clan_arena_max_respawns");
+	qbool wipeout = isWipeout();
+	int round_deaths = p->round_deaths + offset;
 	int time = 999;
 	int teamsize = 0;
 	int multiple;
 	gedict_t *p2;
+
+	if (isWipeoutX())
+	{
+		// Penalize only the current death; future deaths depend on possession at that kill.
+		if (!offset)
+		{
+			round_deaths += WOX_RespawnPenalty(p);
+		}
+		// Cap the effective count, including any penalty, at death five.
+		round_deaths = min(5, round_deaths);
+	}
 
 	// count players on team
 	for (p2 = world; (p2 = find_plr_same_team(p2, getteam(p)));)
@@ -169,16 +186,16 @@ int calc_respawn_time(gedict_t *p, int offset)
 
 	multiple = bound(3, teamsize+1, 6);	// first respawn won't take more than 6 seconds regardless of team size
 
-	if (isWipeout && (p->round_deaths+offset <= max_deaths))
+	if (wipeout && CA_HasRespawnsRemaining(p, offset))
 	{
 		// if 4 players on team, the spawn times are 5, 10, 20, 30
 		// if 3 players on team, the spawn times are 4, 8, 16, 24
 		// if 2 players on team, the spawn times are 3, 6, 12, 18
-		time = p->round_deaths+offset == 1 ? multiple : (p->round_deaths-1+offset) * (multiple*2);
+		time = round_deaths == 1 ? multiple : (round_deaths-1) * (multiple*2);
 	}
 
 	// If you're the only player on your team, you get one free instant respawn on first death
-	if (isWipeout && p->is_solo && p->round_deaths+offset == 1) {
+	if (wipeout && p->is_solo && round_deaths == 1) {
 		time = 0;
 	}
 
@@ -290,7 +307,10 @@ void SM_PrepareCA(void)
 		return;
 	}
 
-	if (cvar("k_clan_arena") == 2)
+	WOX_ResetFlag();
+	ca_round_winner = 0;
+
+	if (isWipeout())
 	{
 		WO_InitializeSpawns(); // init wipeout spawns
 	}
@@ -334,6 +354,18 @@ int CA_wins_required(void)
 qbool isCA(void)
 {
 	return (isTeam() && cvar("k_clan_arena"));
+}
+
+qbool isWipeout(void)
+{
+	float mode = cvar("k_clan_arena");
+
+	return (mode == 2 || mode == 3);
+}
+
+qbool isWipeoutX(void)
+{
+	return (cvar("k_clan_arena") == 3);
 }
 
 qbool CA_CanSpray(void)
@@ -401,6 +433,9 @@ void CA_AddLatePlayer(gedict_t *p, char *team)
 void CA_MatchBreak(void)
 {
 	gedict_t *p;
+
+	WOX_ResetFlag();
+	ca_round_winner = 0;
 
 	// reset these so a new game can be started right away
 	ca_round_pause = 0;
@@ -659,8 +694,6 @@ void CA_PutClientInServer(void)
 	// set to ghost if dead
 	if (ISDEAD(self))
 	{
-		int max_deaths = cvar("k_clan_arena_max_respawns");
-
 		self->s.v.solid = SOLID_NOT;
 		self->s.v.movetype = MOVETYPE_NOCLIP;
 		self->vw_index = 0;
@@ -676,7 +709,7 @@ void CA_PutClientInServer(void)
 
 		self->in_play = false;
 		self->round_deaths++; //increment death count for wipeout
-		self->in_limbo = (self->ca_ready) && (self->round_deaths <= max_deaths) && self->can_respawn;
+		self->in_limbo = self->ca_ready && CA_HasRespawnsRemaining(self, 0) && self->can_respawn;
 		self->spawn_delay = 0;
 
 		setmodel(self, "");
@@ -714,7 +747,7 @@ qbool CA_can_fire(gedict_t *p)
 
 void CA_show_greeting(gedict_t *self)
 {
-	char* mode = cvar("k_clan_arena") == 2 ? "Wipeout!" : "Clan Arena!";
+	char* mode = isWipeoutX() ? "Wipeout X Beta!" : (isWipeout() ? "Wipeout!" : "Clan Arena!");
 
 	if (self->ct == ctPlayer && !match_in_progress)
 	{
@@ -772,7 +805,6 @@ void CA_SendTeamInfo(gedict_t *t)
 	int timetospawn;
 	int kills;
 	int deaths;
-	int max_deaths;
 	int track_target;
 	gedict_t *p, *s;
 	char *tm, *nick;
@@ -788,7 +820,6 @@ void CA_SendTeamInfo(gedict_t *t)
 	camode = 1;		// 1 is the only mode right now
 	deadtype = 0;
 	timetospawn = 0;
-	max_deaths = cvar("k_clan_arena_max_respawns");
 
 	for (cnt = 0, p = world; (p = find_plr(p));)
 	{
@@ -809,7 +840,7 @@ void CA_SendTeamInfo(gedict_t *t)
 				{
 					deadtype = 1;	// player is dead but will respawn
 
-					if ((p->round_deaths > max_deaths) || (p->seconds_to_respawn == 999))
+					if (!CA_HasRespawnsRemaining(p, 0) || (p->seconds_to_respawn == 999))
 					{
 						deadtype = 2;	// player is dead and won't respawn
 					}
@@ -855,6 +886,17 @@ void CA_SendTeamInfo(gedict_t *t)
 		{
 			origin0 = origin1 = origin2 = h = a = items = shells = nails = rockets = cells = 0;
 		}
+
+		if (isWipeoutX())
+		{
+			// Flag possession is public for both teams; other enemy inventory stays private.
+			// Tracking copies another player's items, so use actual possession.
+			items &= ~IT_KEY2;
+			if (p->in_play && ISLIVE(p) && (p->ctf_flag & CTF_FLAG))
+			{
+				items |= IT_KEY2;
+			}
+		}
 		
 		kills = bound(0, (int)p->round_kills, 999);
 		deaths = bound(0, (int)p->round_deaths, 999);
@@ -872,6 +914,13 @@ void CA_check_escape(gedict_t *targ, gedict_t *attacker)
 	float escape_time = g_globalvars.time - targ->escape_time;
 	gedict_t *p;
 
+	// In WipeoutX, the attacking team must have the flag to end the round.
+	// If a respawn penalty was applied for this kill, we know the attacker's team had possession.
+	if (isWipeoutX() && !WOX_RespawnPenalty(targ))
+	{
+		return;
+	}
+
 	if (escape_time > 0 && escape_time < 0.3)
 	{
 		for (p = world; (p = find_plr_same_team(p, getteam(targ)));)
@@ -888,6 +937,12 @@ void CA_check_escape(gedict_t *targ, gedict_t *attacker)
 		// Escaping a wipe on the first life results in instant respawn.
 		// That's cool, but could be written cleaner in calc_respawn_time(). 
 		targ->round_deaths--;
+
+		// Keep the displayed delay correct after awarding the escape credit, before ghosting.
+		if (isWipeoutX() && targ->can_respawn)
+		{
+			targ->seconds_to_respawn = calc_respawn_time(targ, 1 + WOX_RespawnPenalty(targ));
+		}
 
 		G_bprint(2, "%s survives by &cff0%.0f&r milliseconds!\n", targ->netname, escape_time*1000);
 	}
@@ -933,7 +988,7 @@ void CA_ClientObituary(gedict_t *targ, gedict_t *attacker)
 {
 	attacker->round_kills++;
 	
-	if (cvar("k_clan_arena") == 2)	// Wipeout only
+	if (isWipeout())	// Wipeout only
 	{
 		// check if attacker is a solo player and start regen timer
 		if (attacker->is_solo && !attacker->regen_timer)
@@ -987,7 +1042,7 @@ static qbool is_solo_team_first_death(char *team)
 	int team_size = 0;
 	gedict_t *team_player = NULL;
 
-	if (!team || cvar("k_clan_arena") != 2) // Only applies to wipeout
+	if (!team || !isWipeout()) // Only applies to wipeout
 	{
 		return false;
 	}
@@ -1008,7 +1063,8 @@ static qbool is_solo_team_first_death(char *team)
 
 	return (team_player
 		&& team_player->is_solo				// redundant but free, so why not
-		&& team_player->round_deaths <= 1	// "<= 1" avoids a race condition
+		// Fresh corpses have not passed through the ghost spawn's death counter.
+		&& team_player->round_deaths + (team_player->in_play && ISDEAD(team_player) ? 1 : 0) <= 1
 		&& team_player->can_respawn			// makes sures player didn't /kill
 	);
 }
@@ -1084,6 +1140,56 @@ static int CA_check_alive_teams(int *alive_team)
 	}
 
 	return 0;
+}
+
+qbool CA_RoundWon(void)
+{
+	return (isCA() && match_in_progress == 2 && !match_over && ca_round_winner != 0);
+}
+
+static void CA_LockRoundWinner(int team)
+{
+	gedict_t *p;
+	char *winner = cvar_string(team == 1 ? "_k_team1" : "_k_team2");
+
+	if (ca_round_winner || (team != 1 && team != 2))
+	{
+		return;
+	}
+
+	ca_round_winner = team;
+	for (p = world; (p = find_plr(p));)
+	{
+		if (ISLIVE(p) && streq(getteam(p), winner))
+		{
+			p->no_pain = true;
+		}
+	}
+}
+
+void CA_PlayerDied(gedict_t *p, gedict_t *attacker)
+{
+	int winner = 0;
+
+	if (!isCA() || match_in_progress != 2 || match_over || ra_match_fight != 2
+		|| ca_round_pause || ca_round_winner || !p->ca_ready || !p->in_play)
+	{
+		return;
+	}
+
+	if (isWipeoutX())
+	{
+		winner = WOX_PlayerDied(p, attacker);
+	}
+	else if (CA_check_alive_teams(&winner) != 1)
+	{
+		return;
+	}
+
+	if (winner)
+	{
+		CA_LockRoundWinner(winner);
+	}
 }
 
 void CA_PrintScores(void)
@@ -1296,15 +1402,10 @@ void CA_OnePlayerStats(gedict_t *p, qbool series_over)
 void UnlimitedEndRoundAmmo(void)
 {
 	gedict_t *p;
-	int ammo = 9999;
 
 	for (p = world; (p = find_plr(p));)
 	{
-		p->s.v.ammo_nails = ammo;
-		p->s.v.ammo_shells = ammo;
-		p->s.v.ammo_rockets = ammo;
-		p->s.v.ammo_cells = ammo;
-		p->ca_ammo_grenades = ammo;
+		W_RefreshUnlimitedAmmo(p, true);
 	}
 }
 
@@ -1382,7 +1483,7 @@ void EndRound(int alive_team)
 
 				for (p = world; (p = find_plr(p));)
 				{
-					if (cvar("k_clan_arena") == 2)
+					if (isWipeout())
 					{
 						if (alive_team && streq(getteam(p), cvar_string(va("_k_team%d", alive_team))))
 						{
@@ -1555,13 +1656,14 @@ void CA_player_pre_think(void)
 		}
 
 		// wipeout: if you're a solo and waiting for health regen
-		if (cvar("k_clan_arena") == 2 && self->is_solo && self->regen_timer)
+		if (isWipeout() && self->is_solo && self->regen_timer)
 		{
 			check_solo_regen(self);
 		}
 
 		// take no damage to health/armor within 1 second of respawn or during endround
-		if (self->in_play && ((alive_time >= 1) || !self->round_deaths) && !ca_round_pause)
+		if (self->in_play && ((alive_time >= 1) || !self->round_deaths)
+			&& !ca_round_pause && !CA_RoundWon())
 		{
 			self->no_pain = false;
 		}
@@ -1663,8 +1765,24 @@ void CA_Frame(void)
 
 	round_time = Q_rint(g_globalvars.time - time_to_start);
 
-	// if k_clan_arena is 2, we're playing wipeout
-	if (ra_match_fight == 2 && !ca_round_pause && cvar("k_clan_arena") == 2)
+	// A final kill locks the result before any further damage or timed respawns.
+	if (ca_round_winner)
+	{
+		EndRound(ca_round_winner);
+	}
+	else if (isWipeoutX() && (ra_match_fight == 2 || ca_round_pause))
+	{
+		int winner = WOX_CheckRound();
+
+		if (winner)
+		{
+			CA_LockRoundWinner(winner);
+			EndRound(winner);
+		}
+	}
+
+	// Shared Wipeout and Wipeout X respawn handling.
+	if (ra_match_fight == 2 && !ca_round_pause && isWipeout())
 	{
 		float alive_time;
 		int last_alive;
@@ -1752,8 +1870,9 @@ void CA_Frame(void)
 		}
 	}
 
-	// check if there exist only one team with alive players and others are eliminated, if so then its time to start ca countdown
-	if (ra_match_fight == 2 || (ra_match_fight == 1 && ca_round_pause == 1))
+	// Standard CA/Wipeout elimination; Wipeout X resolves its flag rule above.
+	if (!ca_round_winner && !isWipeoutX()
+		&& (ra_match_fight == 2 || (ra_match_fight == 1 && ca_round_pause == 1)))
 	{
 		int alive_team = 0;
 
@@ -1764,17 +1883,18 @@ void CA_Frame(void)
 				break;
 
 			case 1: // Only one team alive
+				CA_LockRoundWinner(alive_team);
 				EndRound(alive_team);
 				break;
 
 			default:
 				break; // both teams alive
 		}
+	}
 
-		if (ra_match_fight == 2)
-		{
-			return;
-		}
+	if (ra_match_fight == 2)
+	{
+		return;
 	}
 
 	if ((team1_score >= CA_wins_required()) || (team2_score >= CA_wins_required()))
@@ -1799,6 +1919,7 @@ void CA_Frame(void)
 	{
 		if (!ra_match_fight)
 		{
+			ca_round_winner = 0;
 			// ok start ra timer
 			ra_match_fight = 1; // ra countdown
 			last_r = 999999999;
@@ -1818,6 +1939,11 @@ void CA_Frame(void)
 
 				G_sprint(p, 2, "round \x90%d\x91 starts in 5 seconds.\n", round_num);
 				snprintf(p->cptext, sizeof(p->cptext), " "); // reset any server print from last round
+			}
+
+			if (isWipeoutX())
+			{
+				WOX_StartRound();
 			}
 		}
 
@@ -1892,10 +2018,10 @@ float WO_GetSpawnRadius(gedict_t *spawn_point)
 
 // Initialize wipeout spawns by creating info_player_wipeout entities
 // from the wipeout_spawn_configs array. These custom spawns are used
-// exclusively during wipeout mode
+// during Wipeout and Wipeout X
 void WO_InitializeSpawns(void)
 {
-	if (cvar("k_clan_arena") == 2)
+	if (isWipeout())
 	{
 		int i, j;
 		for (i = 0; wipeout_spawn_configs[i].mapname; i++)
