@@ -1055,7 +1055,7 @@ float CheckSpawnPoint(vec3_t v)
  */
 static float GetEffectiveSpawnRadius(gedict_t *spot, float default_radius)
 {
-	if (cvar("k_clan_arena") == 2)
+	if (isWipeout())
 	{
 		float custom_radius = WO_GetSpawnRadius(spot);
 		if (custom_radius > 0)
@@ -1129,7 +1129,7 @@ gedict_t* Sub_SelectSpawnPoint(char *spawnname)
 			}
 
 			// For wipeout mode, check line of sight before blocking spawn
-			if (cvar("k_clan_arena") == 2)
+			if (isWipeout())
 			{
 				traceline(PASSVEC3(spot->s.v.origin), PASSVEC3(thing->s.v.origin), true, self);
 				if (g_globalvars.trace_fraction < 1)
@@ -1214,7 +1214,7 @@ gedict_t* Sub_SelectSpawnPoint(char *spawnname)
 				}
 
 				// For wipeout mode, check line of sight before moving player
-				if (cvar("k_clan_arena") == 2)
+				if (isWipeout())
 				{
 					traceline(PASSVEC3(spot->s.v.origin), PASSVEC3(thing->s.v.origin), true, self);
 					if (g_globalvars.trace_fraction < 1)
@@ -1330,7 +1330,7 @@ gedict_t* SelectSpawnPoint(char *spawnname)
 	gedict_t *spot = Sub_SelectSpawnPoint(spawnname);
 
 	// k_spw 4 feature, recheck spawn poit second time if we select same spawn point in row, so it low chance to get same spawn point
-	if ((match_in_progress == 2) && (k_lastspawn == spot) && (cvar("k_spw") == 4 || cvar("k_clan_arena") == 2))
+	if ((match_in_progress == 2) && (k_lastspawn == spot) && (cvar("k_spw") == 4 || isWipeout()))
 	{
 		self->k_lastspawn = k_lastspawn;
 		spot = Sub_SelectSpawnPoint(spawnname);
@@ -1708,14 +1708,15 @@ qbool WeaponPrediction_SendEntity(int sendflags)
 			WriteByte(MSG_CSQC, owner->weapon_index);
 		}
 	}
+	// Prediction uses byte ammo counts; clamp the wire values without changing inventory.
 	if (sendflags & WEAPONINFO_AMMO_SHELLS)
-		WriteByte(MSG_CSQC, owner->s.v.ammo_shells);
+		WriteByte(MSG_CSQC, bound(0, owner->s.v.ammo_shells, 255));
 	if (sendflags & WEAPONINFO_AMMO_NAILS)
-		WriteByte(MSG_CSQC, owner->s.v.ammo_nails);
+		WriteByte(MSG_CSQC, bound(0, owner->s.v.ammo_nails, 255));
 	if (sendflags & WEAPONINFO_AMMO_ROCKETS)
-		WriteByte(MSG_CSQC, owner->s.v.ammo_rockets);
+		WriteByte(MSG_CSQC, bound(0, owner->s.v.ammo_rockets, 255));
 	if (sendflags & WEAPONINFO_AMMO_CELLS)
-		WriteByte(MSG_CSQC, owner->s.v.ammo_cells);
+		WriteByte(MSG_CSQC, bound(0, owner->s.v.ammo_cells, 255));
 
 	if (sendflags & WEAPONINFO_ATTACK)
 	{
@@ -2202,7 +2203,7 @@ void PutClientInServer(void)
 				"info_player_deathmatch" : streq(getteam(self), "red") ?
 				"info_player_team1_deathmatch" : "info_player_team2_deathmatch");
 		}
-		else if (cvar("k_clan_arena") == 2)  // Wipeout mode
+		else if (isWipeout())  // Wipeout mode
 		{
 			spot = SelectSpawnPoint("info_player_wipeout");
 			// Fallback to regular spawns if no wipeout spawns exist
@@ -4563,7 +4564,7 @@ void CheckLightEffects(void)
 			& ~(EF_DIMLIGHT | EF_BRIGHTLIGHT | EF_BLUE | EF_RED | EF_GREEN);
 
 	// well, EF_xxx may originate from different sources, check it all
-	if (self->ctf_flag & CTF_FLAG)
+	if ((self->ctf_flag & CTF_FLAG) && !isWipeoutX())
 	{
 		dim = true;
 	}
@@ -4948,7 +4949,7 @@ void PlayerPostThink(void)
 		self->client_predflags = PRDFL_FORCEOFF;
 	else if (!CA_can_fire(self))
 		self->client_predflags = PRDFL_FORCEOFF;
-	else if ((cvar("k_clan_arena") == 2) && ca_round_pause && self->in_play)
+	else if (isWipeout() && ca_round_pause && self->in_play)
 		self->client_predflags = PRDFL_FORCEOFF;
 	else if ((match_in_progress == 1) || !can_prewar(true))
 		self->client_predflags = PRDFL_FORCEOFF;

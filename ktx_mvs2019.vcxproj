@@ -408,6 +408,7 @@
     <ClCompile Include="src\captain.c" />
     <ClCompile Include="src\coach.c" />
     <ClCompile Include="src\clan_arena.c" />
+    <ClCompile Include="src\wipeoutx.c" />
     <ClCompile Include="src\client.c">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Disabled</Optimization>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>

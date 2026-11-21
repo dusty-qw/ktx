@@ -495,6 +495,12 @@ void PlayerDropFlag(gedict_t *player, qbool tossed)
 	gedict_t *flag;
 	char *cn;
 
+	if (isWipeoutX())
+	{
+		WOX_PlayerDropFlag(player, tossed);
+		return;
+	}
+
 	if (!(player->ctf_flag & CTF_FLAG))
 	{
 		return;

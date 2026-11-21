@@ -35,8 +35,62 @@ void ClanArenaTrackingToggleButton(void);
 void BotsRocketSpawned(gedict_t *newmis);
 void BotsGrenadeSpawned(gedict_t *newmis);
 
+void W_UpdateCurrentAmmo(gedict_t *p)
+{
+	// Update the ammo display without restarting the current weapon animation.
+	switch ((int)p->s.v.weapon)
+	{
+		case IT_SHOTGUN:
+		case IT_SUPER_SHOTGUN:
+			p->s.v.currentammo = p->s.v.ammo_shells;
+			break;
+		case IT_NAILGUN:
+		case IT_SUPER_NAILGUN:
+			p->s.v.currentammo = p->s.v.ammo_nails;
+			break;
+		case IT_GRENADE_LAUNCHER:
+			p->s.v.currentammo = isCA() ? p->ca_ammo_grenades : p->s.v.ammo_rockets;
+			break;
+		case IT_ROCKET_LAUNCHER:
+			p->s.v.currentammo = p->s.v.ammo_rockets;
+			break;
+		case IT_LIGHTNING:
+			p->s.v.currentammo = p->s.v.ammo_cells;
+			break;
+		default:
+			p->s.v.currentammo = 0;
+			break;
+	}
+}
+
+void W_RefreshUnlimitedAmmo(gedict_t *p, qbool include_gl)
+{
+	// Refill the standard ammo pools, optionally including CA's separate GL ammo.
+	p->s.v.ammo_nails = UNLIMITED_AMMO;
+	p->s.v.ammo_shells = UNLIMITED_AMMO;
+	p->s.v.ammo_rockets = UNLIMITED_AMMO;
+	p->s.v.ammo_cells = UNLIMITED_AMMO;
+	if (include_gl)
+	{
+		p->ca_ammo_grenades = UNLIMITED_AMMO;
+	}
+
+	W_UpdateCurrentAmmo(p);
+}
+
 void AmmoUsed(gedict_t *player)
 {
+	// Round-pause ammo includes GL and takes priority over the carrier bonus.
+	if (isCA() && match_in_progress == 2 && ca_round_pause)
+	{
+		W_RefreshUnlimitedAmmo(player, true);
+	}
+	else if (isWipeoutX())
+	{
+		// During combat, the flag bonus leaves CA's grenade counter finite.
+		WOX_RefreshCarrierAmmo(player);
+	}
+
 #ifdef BOT_SUPPORT
 	if (player->fb.ammo_used)
 	{
@@ -1602,15 +1656,44 @@ void GrenadeTouch(void)
 	}
 }
 
-/*
- ================
- W_FireGrenade
- ================
- */
+// Shared launch velocity, pitch limit, and spin for grenades and Wipeout X flags.
+void W_SetGrenadeVelocity(gedict_t *projectile, gedict_t *player, float r1, float r2)
+{
+	vec3_t ang;
+
+	VectorCopy(player->s.v.v_angle, ang);
+
+	// limit pitch in case the server allows pitch angles < -70,
+	// so that grenades still go straight up and not behind
+	if (ang[PITCH] < -70)
+	{
+		ang[PITCH] = -70;
+	}
+
+	trap_makevectors(ang);
+
+	// Yawnmode: disable randomness in grenade aim
+	// - Molgrum
+	if (k_yawnmode)
+	{
+		r1 = r2 = 0;
+	}
+
+	projectile->s.v.velocity[0] = g_globalvars.v_forward[0] * 600 + g_globalvars.v_up[0] * 200
+			+ r1 * g_globalvars.v_right[0] * 10 + r2 * g_globalvars.v_up[0] * 10;
+	projectile->s.v.velocity[1] = g_globalvars.v_forward[1] * 600 + g_globalvars.v_up[1] * 200
+			+ r1 * g_globalvars.v_right[1] * 10 + r2 * g_globalvars.v_up[1] * 10;
+	projectile->s.v.velocity[2] = g_globalvars.v_forward[2] * 600 + g_globalvars.v_up[2] * 200
+			+ r1 * g_globalvars.v_right[2] * 10 + r2 * g_globalvars.v_up[0] * 10;
+
+	SetVector(projectile->s.v.avelocity, 300, 300, 300);
+
+	vectoangles(projectile->s.v.velocity, projectile->s.v.angles);
+}
+
 void W_FireGrenade(void)
 {
 	float r1 = crandom(), r2 = crandom();
-	vec3_t ang;
 	WS_Mark(self, wpGL);
 
 	self->ps.wpn[wpGL].attacks++;
@@ -1652,35 +1735,7 @@ void W_FireGrenade(void)
 
 // set newmis speed     
 
-	VectorCopy(self->s.v.v_angle, ang);
-
-	// limit pitch in case the server allows pitch angles < -70,
-	// so that grenades still go straight up and not behind
-	if (ang[PITCH] < -70)
-	{
-		ang[PITCH] = -70;
-	}
-
-	trap_makevectors(ang);
-
-	// Yawnmode: disable randomness in grenade aim
-	// - Molgrum
-	if (k_yawnmode)
-	{
-		r1 = r2 = 0;
-	}
-
-	newmis->s.v.velocity[0] = g_globalvars.v_forward[0] * 600 + g_globalvars.v_up[0] * 200
-			+ r1 * g_globalvars.v_right[0] * 10 + r2 * g_globalvars.v_up[0] * 10;
-	newmis->s.v.velocity[1] = g_globalvars.v_forward[1] * 600 + g_globalvars.v_up[1] * 200
-			+ r1 * g_globalvars.v_right[1] * 10 + r2 * g_globalvars.v_up[1] * 10;
-	newmis->s.v.velocity[2] = g_globalvars.v_forward[2] * 600 + g_globalvars.v_up[2] * 200
-			+ r1 * g_globalvars.v_right[2] * 10 + r2 * g_globalvars.v_up[0] * 10;
-
-	SetVector(newmis->s.v.avelocity, 300, 300, 300);
-// newmis.avelocity = '300 300 300';
-
-	vectoangles(newmis->s.v.velocity, newmis->s.v.angles);
+	W_SetGrenadeVelocity(newmis, self, r1, r2);
 
 	newmis->touch = (func_t) GrenadeTouch;
 	newmis->s.v.nextthink = g_globalvars.time + 2.5;
@@ -1896,7 +1951,7 @@ void superspike_touch(void)
 	else
 	{
 		// no ricochet or sparks in wipeout endround phase
-		if (cvar("k_clan_arena") == 2 && ca_round_pause)
+		if (isWipeout() && ca_round_pause)
 		{
 			ent_remove(self);
 			return;
@@ -1916,7 +1971,7 @@ void superspike_touch(void)
 void W_FireSuperSpikes(void)
 {
 	vec3_t dir, tmp;
-	qbool wipe_spike = (cvar("k_clan_arena") == 2) && ca_round_pause && self->in_play;
+	qbool wipe_spike = isWipeout() && ca_round_pause && self->in_play;
 
 	WS_Mark(self, wpSNG);
 

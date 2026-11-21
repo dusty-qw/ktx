@@ -140,6 +140,7 @@ set(SRC_COMMON
 	"${DIR_SRC}/vote.c"
 	"${DIR_SRC}/weaponpred_defs.c"
 	"${DIR_SRC}/weapons.c"
+	"${DIR_SRC}/wipeoutx.c"
 	"${DIR_SRC}/world.c"
 	)
 

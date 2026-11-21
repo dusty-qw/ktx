@@ -81,6 +81,9 @@
 #define DAMAGE_YES						1
 #define DAMAGE_AIM						2
 
+// Ammo is replenished to this count immediately after each unlimited-ammo shot.
+#define UNLIMITED_AMMO 					999
+
 // items
 #define IT_AXE							4096
 #define IT_SHOTGUN						1
