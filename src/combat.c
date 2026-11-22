@@ -476,18 +476,18 @@ void T_Damage(gedict_t *targ, gedict_t *inflictor, gedict_t *attacker, float dam
 
 	// if k_prewar is 3, only take damage from other players
 	if (prewar_fight)
-	{	
-		if (attacker->ct == ctPlayer)
-		{
-			// Don't damage self in prewar even if k_prewar is 3
-			if (attacker == targ)
-			{
-				tp4teamdmg = true;
-			}
-		}
-		else
+	{
+		// Map death handlers reject activation before a match, leaving depleted
+		// buttons and doors permanently dead. Keep them intact until match start.
+		if ((attacker->ct != ctPlayer) || ((targ->ct != ctPlayer) && !k_practice))
 		{
 			return;
+		}
+
+		// Don't damage self in prewar even if k_prewar is 3
+		if (attacker == targ)
+		{
+			tp4teamdmg = true;
 		}
 	}
 
