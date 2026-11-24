@@ -49,6 +49,7 @@ void PlayerStats(void);
 void ExitCaptain(void);
 void CheckFinishCaptain(void);
 void MakeMOTD(void);
+void MOTDMenuInput(void);
 void ImpulseCommands(void);
 void WeaponPrediction_ResetBaseline(void);
 qbool W_CanSwitch(int wp, qbool warn);
@@ -4908,6 +4909,7 @@ void PlayerPostThink(void)
 	}
 #endif
 
+	MOTDMenuInput();
 	W_WeaponFrame();
 
 	//
